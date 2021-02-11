@@ -1,4 +1,4 @@
-# Project Title
+# EntDetector
 
 The EntDetector package offers a set of functions to analyze the presence of entanglement in quantum states described by a state vector or a density matrix. Apart from the existing methods of entanglement detection, such as Negativity, Positive Partial Transpose or Schmidt decomposition for vector states. EntDetector also offers combined methods of spectral distribution with Schmidt distribution. A method for computing gramian for quantum states is also offered. The primary work environment for the package is the Python ecosystem.
 
