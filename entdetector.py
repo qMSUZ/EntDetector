@@ -67,61 +67,313 @@ def chop(expr, delta=10 ** -10):
 # basic state creation
 #
 def create_base_state(d, n, base_state):
+    """
+        Create a base state
+
+        Parameters
+        ----------
+        d : integer
+            the number of degrees of freedom for the qudit d, d = 2
+
+        n : integer
+            number of qudits for the created state
+
+        base_state: integer
+            the base state that the created qubit will take
+
+        Returns
+        -------
+        quantum state : numpy vector
+            Numpy vector for quantum state
+
+        Examples
+        --------
+        Create of register with one qubit that becomes zero state
+        >>> q0=create_base_state(2, 1, 0)
+        >>> print(q0)
+        [1. 0.]
+    """
     v = np.zeros(d ** n)
     v[base_state] = 1
     return v
 
 def create_pure_state(d, n, base_state):
+    """
+        Create a pure state
+
+        Parameters
+        ----------
+        d : integer
+            the number of degrees of freedom for the qudit d, d = 2
+
+        n : integer
+            number of qudits for the created state
+
+        base_state: integer
+            the base state that the created qubit will take
+
+        Returns
+        -------
+        quantum state : numpy vector
+            Numpy vector for quantum state
+
+        Examples
+        --------
+        Create of registry with one qubit that is a pure state
+        >>> q0=create_pure_state(2, 1, 0)
+        >>> print(q0)
+        [1. 0.]
+    """
     return create_base_state(d, n, base_state)
 
 def create_qubit_zero_state():
+    """
+        Create a zero state qubit
+
+        Parameters
+        ----------
+        None
+
+        Returns
+        -------
+        quantum state : numpy vector
+            Numpy vector for quantum state
+
+        Examples
+        --------
+        Create of register with one qubit for zero state
+        >>> q0=create_qubit_zero_state()
+        >>> print(q0)
+        [1. 0.]
+    """
     v = np.zeros(2)
     v[0] = 1.0
     return v
 
 def create_qubit_one_state():
+    """
+        Create a one state qubit
+
+        Parameters
+        ----------
+        None
+
+        Returns
+        -------
+        quantum state : numpy vector
+            Numpy vector for quantum state
+
+        Examples
+        --------
+        Create of register for one state qubit
+        >>> q0=create_qubit_one_state()
+        >>> print(q0)
+        [0. 1.]
+    """
     v = np.zeros(2)
     v[1] = 1.0
     return v
 
 def create_qubit_plus_state():
+    """
+        Create a plus state qubit
+
+        Parameters
+        ----------
+        None
+
+        Returns
+        -------
+        quantum state : numpy vector
+            Numpy vector for quantum state
+
+        Examples
+        --------
+        Create of register with one qubit which becomes plus state
+        >>> q0=create_qubit_plus_state()
+        >>> print(q0)
+        [0.70710678 0.70710678]
+    """
     v = np.zeros(2)
     v[0] = 1.0 / np.sqrt(2)
     v[1] = 1.0 / np.sqrt(2)
     return v
 
 def create_qubit_minus_state():
+    """
+        Create a minus state qubit
+
+        Parameters
+        ----------
+        None
+
+        Returns
+        -------
+        quantum state : numpy vector
+            Numpy vector for quantum state
+
+        Examples
+        --------
+        Create of register with one qubit which becomes minus state
+        >>> q0=create_qubit_minus_state()
+        >>> print(q0)
+        [ 0.70710678 -0.70710678]
+    """
     v = np.zeros(2)
     v[0] =   1.0 / np.sqrt(2)
     v[1] = - 1.0 / np.sqrt(2)
     return v
 
 def create_qutrit_state(base_state):
+    """
+        Create a qutrit state
+
+        Parameters
+        ----------
+        base_state: integer
+            the base state that the created qubit will take
+
+        Returns
+        -------
+        quantum state : numpy vector
+            Numpy vector for quantum state
+
+        Examples
+        --------
+        Create of register for qutrit state
+        >>> q0=create_qutrit_state(0)
+        >>> print(q0)
+        [1. 0. 0.]
+    """
     v = np.zeros(3)
     v[base_state] = 1.0
     return v
 
 def create_qutrit_zero_state():
-    v = np.zeros(2)
+    """
+        Create a qutrit zero state
+
+        Parameters
+        ----------
+        None
+
+        Returns
+        -------
+        quantum state : numpy vector
+            Numpy vector for quantum state
+
+        Examples
+        --------
+        Create of register for one qutrit which becomes zeros state
+        >>> q0=create_qutrit_zero_state()
+        >>> print(q0)
+        [1. 0. 0.]
+    """
+    v = np.zeros(3)
     v[0] = 1.0
     return v
 
 def create_qutrit_one_state():
-    v = np.zeros(2)
-    v[0] = 1.0
+    """
+        Create a qutrit with state |1>
+
+        Parameters
+        ----------
+        None
+
+        Returns
+        -------
+        quantum state : numpy vector
+            Numpy vector for quantum state
+
+        Examples
+        --------
+        Create of state |1> register for one qutrit
+        >>> q0=create_qutrit_one_state()
+        >>> print(q0)
+        [0. 1. 0.]
+    """
+    v = np.zeros(3)
+    v[1] = 1.0
     return v
 
 def create_qutrit_two_state():
-    v = np.zeros(2)
-    v[0] = 1.0
+    """
+        Create a qutrit with state |2>
+
+        Parameters
+        ----------
+        None
+
+        Returns
+        -------
+        quantum state : numpy vector
+            Numpy vector for quantum state
+
+        Examples
+        --------
+        Create of state |2> register for one qutrit
+        >>> q0=create_qutrit_two_state()
+        >>> print(q0)
+        [0. 0. 1.]
+    """
+    v = np.zeros(3)
+    v[2] = 1.0
     return v
 
 def create_qutrit_plus_state():
+    """
+        Create a qutrit plus state
+
+        Parameters
+        ----------
+        None
+
+        Returns
+        -------
+        quantum state : numpy vector
+            Numpy vector for quantum state
+
+        Examples
+        --------
+        Create of qutrit plus state register for one qutrit
+        >>> q0=create_qutrit_plus_state()
+        >>> print(q0)
+        [0.57735027 0.57735027 0.57735027]
+    """
     v = np.ones(3)
-    v[0] = 1.0
+    v[0] = 1.0/np.sqrt(3.0)
+    v[1] = 1.0/np.sqrt(3.0)
+    v[2] = 1.0/np.sqrt(3.0)
     return v
 
 def create_qubit_bell_state(minus=0):
+    """
+        Create a qubit bell state
+
+        Parameters
+        ----------
+            minus : integer 
+                additional parameters for minus amplitude
+        Returns
+        -------
+        quantum state : numpy vector
+            Numpy vector for quantum state
+
+        Examples
+        --------
+        Create of qubit bell state register for one qubit:
+        >>> q0=create_qubit_bell_state()
+        >>> print(q0)
+        [0.70710678  0.         0.         0.70710678]
+
+        Create of qubit bell state (with minus amplitude)
+        register for one qubit:
+        >>> q0=create_qubit_bell_state(1)
+        >>> print(q0)
+        [0.70710678  0.          0.         -0.70710678]
+
+    """
     d = 2
     n = 2
     v = np.zeros(d ** n)
@@ -129,30 +381,133 @@ def create_qubit_bell_state(minus=0):
     if minus == 1:
         v[(d ** n) - 1] = -1.0 / np.sqrt(2)
     else:
-        v[(d ** n) - 1] = 1.0 / np.sqrt(2)
+        v[(d ** n) - 1] =  1.0 / np.sqrt(2)
     return v
 
 def create_mixed_state(d,n):
+    """
+        Create a mixed state
+
+        Parameters
+        ----------
+        d : integer
+            the number of degrees of freedom for the qudit d, d = 2
+
+        n : integer
+            number of qudits for the created state
+
+        base_state: integer
+            the base state that the created qubit will take
+
+        Returns
+        -------
+        quantum dimension : integer
+            Numpy vector for quantum state
+
+        Examples
+        --------
+        Create of mixed state register for one qubit
+        >>> q0=create_mixed_state(2, 1)
+        >>> print(q0)
+        [[0.5 0. ]
+         [0.  0.5]]
+    """
     qden = np.eye(d ** n) / (d ** n)
     return qden
 
-"""
-state |00..0> +  |kkk...k>
-where k = d - 1 and d is demension of single qudit of quantum register
-with n equally dimensional qudits
-"""
+#"""
+#state |00..0> +  |kkk...k>
+#where k = d - 1 and d is demension of single qudit of quantum register
+#with n equally dimensional qudits
+#"""
 def create_0k_stat(d, n):
+    """
+        Create a 0K state (internal function)
+
+        Parameters
+        ----------
+        d : integer
+            the number of degrees of freedom for the qudit d, d = 2
+
+        n : integer
+            number of qudits for the created state
+
+        Returns
+        -------
+        quantum state : numpy vector
+            Numpy vector for quantum state
+
+        Examples
+        --------
+        Create of |+> for one qubit
+        >>> q0=create_0k_stat(2, 1)
+        >>> print(q0)
+        [0.70710678 0.70710678]
+
+        Create of 1.0/sqrt(2.0)(|00> + |11>) for one qubit
+        >>> q0=create_0k_stat(2, 1)
+        >>> print(q0)
+        [0.70710678 0.         0.         0.70710678]
+    """
     v = np.zeros(d ** n)
     v[0] = 1.0/np.sqrt(2)
     v[-1] = v[0]
     return v
 
 def create_max_entangled_pure_state(d):
+    """
+        Create a maximum entangled of pure state
+
+        Parameters
+        ----------
+        d : integer
+            the number of degrees of freedom for the qudit d, d = 2
+
+        Returns
+        -------
+        quantum state : numpy vector
+            Numpy vector for quantum state
+
+        Examples
+        --------
+        Create of register for maximum entangled of pure state
+        for two qubits:
+        >>> q0=create_max_entangled_pure_state(2)
+        >>> print(q0)
+        [0.70710678 0.         0.         0.70710678]
+    """
     v = np.reshape( np.eye(d), d**2 )
     v = v / np.sqrt( d )
     return v
 
 def create_bes_horodecki_24_state(b):
+    """
+        Create a Horodecki's 2x4 of entangled state
+
+        Parameters
+        ----------
+        b : real
+            the entangled state with a parameter b
+
+        Returns
+        -------
+        quantum state : numpy vector
+            Numpy vector gives the Horodecki's two-qudit states
+
+        Examples
+        --------
+        Create a Horodecki's 2x4 of entangled state
+        >>> q0=create_bes_horodecki_24_state(1)
+        >>> print(q0)
+        [[0.125 0.    0.    0.    0.    0.125 0.    0.   ]
+         [0.    0.125 0.    0.    0.    0.    0.125 0.   ]
+         [0.    0.    0.125 0.    0.    0.    0.    0.125]
+         [0.    0.    0.    0.125 0.    0.    0.    0.   ]
+         [0.    0.    0.    0.    0.125 0.    0.    0.   ]
+         [0.125 0.    0.    0.    0.    0.125 0.    0.   ]
+         [0.    0.125 0.    0.    0.    0.    0.125 0.   ]
+         [0.    0.    0.125 0.    0.    0.    0.    0.125]]
+    """
     x = np.array([b, b, b, b, b, b, b, b])
     rho = np.diag(x, k=0)
     rho[4][4] = (1.0 + b) / 2.0
@@ -169,6 +524,34 @@ def create_bes_horodecki_24_state(b):
     return rho
 
 def create_bes_horodecki_33_state(a):
+    """
+        Create a Horodecki's 3x3 of entangled state
+
+        Parameters
+        ----------
+        b : real
+            the entangled state with a parameter b
+
+        Returns
+        -------
+        quantum state : numpy vector
+            Numpy vector gives the Horodecki's two-qutrit states
+
+        Examples
+        --------
+        Create a Horodecki's 3x3 of entangled state
+        >>> q0=create_bes_horodecki_33_state(1)
+        >>> print(q0)
+        [[0.11111111 0.         0.         0.         0.11111111 0.          0.         0.         0.11111111]
+         [0.         0.11111111 0.         0.         0.         0.          0.         0.         0.        ]
+         [0.         0.         0.11111111 0.         0.         0.          0.         0.         0.        ]
+         [0.         0.         0.         0.11111111 0.         0.          0.         0.         0.        ]
+         [0.11111111 0.         0.         0.         0.11111111 0.          0.         0.         0.11111111]
+         [0.         0.         0.         0.         0.         0.11111111  0.         0.         0.        ]
+         [0.         0.         0.         0.         0.         0.          0.11111111 0.         0.        ]
+         [0.         0.         0.         0.         0.         0.          0.         0.11111111 0.        ]
+         [0.11111111 0.         0.         0.         0.11111111 0.          0.         0.         0.11111111]]
+    """
     x = np.array([a, a, a, a, a, a, a, a, a])
     rho = np.diag(x, k=0)
     rho[6][6] = (1.0 + a) / 2.0
@@ -185,24 +568,115 @@ def create_bes_horodecki_33_state(a):
     return rho
 
 def create_ghz_state(d, n):
+    """
+        Create a GHz state
+
+        Parameters
+        ----------
+        d : integer
+            the number of degrees of freedom for the qudit d,
+
+        n : integer
+            number of qudits for the created state
+
+        Returns
+        -------
+        quantum state : numpy vector
+            Numpy vector gives the d-partite GHZ state acting on local n dimensions
+
+        Examples
+        --------
+        Create of register for a GHz state
+        >>> q0=create_ghz_state(2, 2)
+        >>> print(q0)
+        [0.70710678 0.         0.         0.70710678]
+    """
     g = np.zeros(d ** n)
     step = np.sum(np.power(d, range(n)))
     g[range(d) * step] = 1/np.sqrt(d)
     return g
 
 def create_wstate(n):
+    """
+        Create a w state
+
+        Parameters
+        ----------
+        n : integer
+            number of qudits for the created state
+
+        Returns
+        -------
+        quantum state : numpy vector
+            Numpy vector gives the n-qubit W-state
+
+        Examples
+        --------
+        Create of register for a w state
+        >>> q0=create_wstate(2)
+        >>> print(q0)
+        [0.         0.70710678 0.70710678 0.        ]
+    """
     w = np.zeros(2 ** n)
     for i in range (n):
         w[2 ** i] = 1 / np.sqrt(n)
     return w
 
 def create_isotropic_qubit_state(p):
+    """
+        Create a isotropic of qubit state
+        Parameters
+        ----------
+        p : real
+           The parameter of the isotropic state
+
+        Returns
+        -------
+        quantum dimension : integer
+           The isotropic state with parameter
+
+        Examples
+        --------
+        Create of register for a isotropic of qubit state
+        >>> q0=create_isotropic_qubit_state(0.25)
+        >>> print(q0)
+        [[0.3125 0.     0.     0.125 ]
+         [0.     0.1875 0.     0.    ]
+         [0.     0.     0.1875 0.    ]
+         [0.125  0.     0.     0.3125]]
+    """
     q = create_qubit_bell_state()
     qdentmp = np.outer(q, q)
     qden = (p * qdentmp) + ((1-p) * 0.25 * np.eye(4))
     return qden
 
 def create_werner_two_qubit_state(p, state="Bell+"):
+    """
+        Create a Werner state for two qubit
+
+        Parameters
+        ----------
+        p : real
+           The parameter of the isotropic state
+        state : string
+           The name of quantum state: Bell+, Bell-, W
+
+        Returns
+        -------
+        quantum dimension : integer
+            The Werner state with parameter
+
+        Examples
+        --------
+        Create of register for two qubit to a Werner state
+        between max entangled state and mixed state
+        >>> q0=create_werner_two_qubit_state(2, state="Bell+")
+        >>> print(q0)
+        [[ 0.75  0.    0.    1.  ]
+         [ 0.   -0.25  0.    0.  ]
+         [ 0.    0.   -0.25  0.  ]
+         [ 1.    0.    0.    0.75]]
+    """
     if state=="Bell+":
         q = create_qubit_bell_state()
     if state=="Bell-":
