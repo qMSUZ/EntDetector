@@ -401,8 +401,9 @@ def create_mixed_state(d,n):
 
         Returns
         -------
-        quantum dimension : integer
-            Numpy vector for quantum state
+        density matrix
+            Numpy array for quantum state
+            expressed as density matrix
 
         Examples
         --------
@@ -491,14 +492,14 @@ def create_bes_horodecki_24_state(b):
 
         Returns
         -------
-        quantum state : numpy vector
-            Numpy vector gives the Horodecki's two-qudit states
+        density matrix : numpy array
+            Numpy array gives the Horodecki's two-qudit states
 
         Examples
         --------
         Create a Horodecki's 2x4 of entangled state
-        >>> q0=create_bes_horodecki_24_state(1)
-        >>> print(q0)
+        >>> qden=create_bes_horodecki_24_state(1)
+        >>> print(qden)
         [[0.125 0.    0.    0.    0.    0.125 0.    0.   ]
          [0.    0.125 0.    0.    0.    0.    0.125 0.   ]
          [0.    0.    0.125 0.    0.    0.    0.    0.125]
@@ -529,19 +530,20 @@ def create_bes_horodecki_33_state(a):
 
         Parameters
         ----------
-        b : real
-            the entangled state with a parameter b
+        a : real
+            the entangled state with a parameter a
 
         Returns
         -------
-        quantum state : numpy vector
-            Numpy vector gives the Horodecki's two-qutrit states
+        density matrix : numpy array
+            Numpy array for the Horodecki's two-qutrit state
+            expressed as density matrix
 
         Examples
         --------
         Create a Horodecki's 3x3 of entangled state
-        >>> q0=create_bes_horodecki_33_state(1)
-        >>> print(q0)
+        >>> qden=create_bes_horodecki_33_state(1)
+        >>> print(qden)
         [[0.11111111 0.         0.         0.         0.11111111 0.          0.         0.         0.11111111]
          [0.         0.11111111 0.         0.         0.         0.          0.         0.         0.        ]
          [0.         0.         0.11111111 0.         0.         0.          0.         0.         0.        ]
@@ -598,7 +600,7 @@ def create_ghz_state(d, n):
 
 def create_wstate(n):
     """
-        Create a w state
+        Create a W-state
 
         Parameters
         ----------
@@ -632,8 +634,9 @@ def create_isotropic_qubit_state(p):
 
         Returns
         -------
-        quantum dimension : integer
-           The isotropic state with parameter
+        density matrix : numpy array
+           The isotropic state expressed
+           as density matrix
 
         Examples
         --------
@@ -659,12 +662,14 @@ def create_werner_two_qubit_state(p, state="Bell+"):
         p : real
            The parameter of the isotropic state
         state : string
-           The name of quantum state: Bell+, Bell-, W
+           The name of quantum state: Bell+, Bell-, W.
+           Default value is Bell+.
 
         Returns
         -------
-        quantum dimension : integer
-            The Werner state with parameter
+        density matrix : numpy array
+            The Werner state expressed
+            as density matrix.
 
         Examples
         --------
@@ -744,15 +749,94 @@ def create_density_matrix_from_vector_state(q):
 #
 
 def eigen_decomposition(qden):
+    """
+        Create a eigen decomposition
+
+        Parameters
+        ----------
+        qden : numpy array
+            The parameter qden represents a density matrix
+
+        Returns
+        -------
+        eigval : numpy array
+        eigvec : numpy array
+            The vector and array of a eigenvalues and eigenvectors
+
+        Examples
+        --------
+        Create eigen decomposition of given quantum state:
+        >>> qden=create_werner_two_qubit_state(0.75)
+        >>> ed=eigen_decomposition(qden)
+        >>> print(ed)
+        (array([0.0625, 0.0625, 0.0625, 0.8125]), array([[-0.70710678,  0.        ,  0.        , -0.70710678],
+               [ 0.        ,  0.        , -1.        ,  0.        ],
+               [ 0.        ,  1.        ,  0.        ,  0.        ],
+               [ 0.70710678,  0.        ,  0.        , -0.70710678]]))
+    """
     eigval, eigvec = np.linalg.eigh(qden)
     return eigval, eigvec
 
 def eigen_decomposition_for_pure_state(q):
+    """
+        Create a eigen decomposition for pure state
+
+        Parameters
+        ----------
+        q : numpy vector
+            The parameter q represents the vector state.
+            The input vector is converted to density matrix.
+
+        Returns
+        -------
+        A two element tuple (eigval,eigvec) where:
+            eigval : is a numpy array of a eigenvalues,
+            eigvec : is a numpy array of a eigenvectors.
+
+        Examples
+        --------
+        Create of register for eigen decomposition for pure state
+        >>> q = create_qubit_bell_state()
+        >>> ed=eigen_decomposition_for_pure_state(q)
+        >>> print(ed)
+        (array([0., 0., 0., 1.]), array([[-0.70710678,  0.        ,  0.        , -0.70710678],
+               [ 0.        ,  0.        , -1.        ,  0.        ],
+               [ 0.        ,  1.        ,  0.        ,  0.        ],
+               [ 0.70710678,  0.        ,  0.        , -0.70710678]]))
+    """
     qden = np.outer(q,q)
     eigval,eigvec = np.linalg.eigh(qden)
     return eigval, eigvec
 
 def reconstruct_density_matrix_from_eigen_decomposition(eigval, eigvec):
+    """
+        Reconstruction of density matrix from a eigen decomposition
+
+        Parameters
+        ----------
+        eigval : numpy array
+        eigvec : numpy array
+            The vector and array of a eigenvalues and eigenvectors
+
+        Returns
+        -------
+        density matrix : numpy array
+            Numpy array for reconstructed quantum state
+
+        Examples
+        --------
+        Reconstruction of density matrix from eigen decomposition:
+        >>> q = create_qubit_bell_state()
+        >>> qden = vector_state_to_density_matrix(q)
+        >>> ev,evec = eigen_decomposition(qden)
+        >>> qdenrecon = reconstruct_density_matrix_from_eigen_decomposition(ev, evec)
+        >>> print( qdenrecon )
+        [[0.5 0.  0.  0.5]
+         [0.  0.  0.  0. ]
+         [0.  0.  0.  0. ]
+         [0.5 0.  0.  0.5]]
+     """
+
     i = 0
     qden = np.zeros([eigval.shape[0],eigval.shape[0]])
     for ev in eigval:
@@ -765,6 +849,35 @@ def reconstruct_density_matrix_from_eigen_decomposition(eigval, eigvec):
 #
 
 def schmidt_decomposition_for_vector_pure_state(q, decomposition_shape):
+    """
+        Create a Schmidt decomposition for vector pure state
+
+        Parameters
+        ----------
+        q : numpy vector
+            The parameter q represents the vector state
+
+        decomposition_shape : tuple of two integers
+            Dimensions of two subsystems
+
+        Returns
+        -------
+        A three element tuple (s,u, vh) where:
+           s  : numpy vector containing Schmidt coefficients,
+           u  : arrays of left Schmidt vectors,
+           vh : arrays of right Schmidt vectors.
+
+        Examples
+        --------
+        Create of register to Schmidt decomposition for vector pure state
+        >>> q = create_qubit_bell_state()
+        >>> decomposition_shape=(2, 2)
+        >>> sd=schmidt_decomposition_for_vector_pure_state(q, decomposition_shape)
+        >>> print(sd)
+        (array([0.70710678, 0.70710678]), array([[1., 0.],
+               [0., 1.]]), array([[1., 0.],
+               [0., 1.]]))
+    """
     d1,d2 = decomposition_shape
     m = q.reshape(d1, d2)
     u, s, vh = np.linalg.svd(m, full_matrices=True)
@@ -775,12 +888,64 @@ def schmidt_decomposition_for_square_operator(qden, decomposition_shape):
     pass
 
 def schmidt_rank_for_vector_pure_state(q, decomposition_shape):
+    """
+        Calculate a Schmidt rank for vector pure state
+
+        Parameters
+        ----------
+        q : numpy array
+            The parameter of the vector state
+
+        decomposition_shape : tuple of two integers
+            Dimensions of two subsystems
+
+        Returns
+        -------
+        sch_rank : integer
+            Schmidt rank value as integer number
+
+        Examples
+        --------
+        Calculate of Schmidt rank for vector pure state
+        >>> q = create_qubit_bell_state()
+        >>> decomposition_shape=(2, 2)
+        >>> sr=schmidt_rank_for_vector_pure_state(q, decomposition_shape)
+        >>> print(sr)
+            2
+    """
     d1,d2 = decomposition_shape
     m = q.reshape(d1, d2)
     sch_rank = np.linalg.matrix_rank(m)
     return sch_rank
 
 def reconstruct_state_after_schmidt_decomposition(s, e, f):
+    """
+        Reconstruction state after Schmidt decomposition
+
+        Parameters
+        ----------
+        s : numpy array
+            The values of Schmidt coefficients
+
+        e, f : numpy arrays
+            The basis vectors from Schmidt decomposition
+
+        Returns
+        -------
+        quantum state : numpy vector
+            Numpy vector for quantum state
+
+        Examples
+        --------
+        Reconstruction state after Schmidt decomposition:
+        >>> q = create_qubit_bell_state()
+        >>> schmidt_shp=(2, 2)
+        >>> s,e,f = schmidt_decomposition_for_vector_pure_state(q,schmidt_shp)
+        >>> q0=reconstruct_state_after_schmidt_decomposition(s, e, f)
+        >>> print(q0)
+            [0.70710678 0.         0.         0.70710678]
+    """
+
     dfin = s.shape[0] * e.shape[0]
     v = np.zeros(dfin)
 
