@@ -54,6 +54,10 @@ class DimensionError(Exception):
     """DimensionError"""
     pass
 
+class ArgumentValueError(Exception):
+    """ArgumentValueError"""
+    pass
+
 # code based on chop
 # discussed at:
 #   https://stackoverflow.com/questions/43751591/does-python-have-a-similar-function-of-chop-in-mathematica
@@ -1402,7 +1406,6 @@ def partititon_disp(kappa):
                 fstr=fstr +string
         return '{'+fstr+'}'
 
-
 def partititon_as_list(kappa):
         n=len(kappa)
         m=max(kappa)
@@ -1414,7 +1417,6 @@ def partititon_as_list(kappa):
                                 string=string+[i]
                 fstr=fstr + [string]
         return fstr
-
 
 def partition_next(kappa, M):
     n=len(kappa)
@@ -1472,4 +1474,171 @@ def gen_two_partion_of_given_number(l):
             part=part + [[int(l/r), int(r)]]
             r=r/2
     return part
+
+def filtered_data_for_paritition_division( r, idxtoremove ):
+    rr = [ ]
+    schmidtnumbers = [ ]
+    #
+    #  remove qubits that are not entangled
+    #
+    for i in r:
+        for idx in idxtoremove:
+            if idx in i[1][0]:
+                i[1][0].remove(idx)
+            #end if
+            if idx in i[1][1]:
+                i[1][1].remove(idx)
+            #end if
+        #end for
+        #if len(i[1][0])>1 and len(i[1][1])>1:
+        rr=rr+[i]
+        if i[0] not in schmidtnumbers:
+            schmidtnumbers=schmidtnumbers + [i[0]]
+        #end if
+    #end for
+    
+    # print 'schmidt numbers', schmidtnumbers
+    #
+    # sort by Schmidt rank
+    #
+    rr=sorted(rr)
+    print("sorted partitions")
+    for i in rr:
+        print(i)
+    #end for
+    #
+    # building a set of partitions
+    #
+    finalpart=set()
+    if 1 in schmidtnumbers:
+        for i in rr:
+            if i[0]==1:
+                if len(i[1][0])>1:
+                    finalpart.add(tuple(i[1][0]))
+                #end of if
+                if len(i[1][1])>1:
+                    finalpart.add(tuple(i[1][1]))
+                #end of if
+            #end of if
+        #end of for i in rr
+    #end of if
+    
+    if 1 not in schmidtnumbers:
+        finalcluster=[]
+        for i in rr:
+            if i[0]==2:
+                for e in i[1][0]:
+                    if e not in finalcluster:
+                        finalcluster = finalcluster + [ e ]
+                for e in i[1][1]:
+                    if e not in finalcluster:
+                        finalcluster = finalcluster + [ e ]
+        finalpart.add(tuple(finalcluster))
+        #print('final cluster', finalcluster)
+        #print('final part', finalpart)
+    return finalpart
+
+def bin2dec(s):
+    return int(s, 2)
+
+def ent_detection_by_paritition_division( q, verbose = 0 ):
+    s = q.size
+    # generation of all two partitite divisions of given
+    # set which is build from the quantum register q
+    res = [ ]
+    idxtoremove = [ ]
+    k = [0] * s
+    M = [0] * s
+    p = 2
+    p_initialize_first(k, M, p)
+    lp = []
+    lp = lp + [make_partititon_as_list(k)]
+    while p_next_partition(k, M, p):
+        lp = lp + [make_partititon_as_list(k)]
+    for i in lp:
+            if verbose:
+                    print(i[0], i[1])
+            mxv=2**len(i[0])
+            myv=2**len(i[1])
+            if verbose:
+                    print(mxv,"x",myv)
+            #m=qcs.Matrix(mxv, myv)
+            m  = np.zeros((mxv, myv), dtype=complex)
+            #mt=qcs.Matrix(mxv, myv)
+            mt = np.zeros((mxv, myv), dtype=complex)
+            for x in range(0,mxv):
+                    for y in range(0, myv):
+                            xstr=bin(x)[2:]
+                            ystr=bin(y)[2:]
+                            xstr='0'*(len(i[0])-len(xstr)) + xstr
+                            ystr='0'*(len(i[1])-len(ystr)) + ystr
+                            cstr=[0]*s
+                            for xidx in range(0, len(xstr)):
+                                    idx = i[0][xidx]
+                                    cstr[idx]=xstr[xidx]
+                            for yidx in range(0, len(ystr)):
+                                    idx = i[1][yidx]
+                                    cstr[idx]=ystr[yidx]
+                            cidx=""
+                            for c in cstr:
+                                    cidx=cidx+c
+                            dcidx=bin2dec(cidx)
+                            dxidx=bin2dec(xstr)
+                            dyidx=bin2dec(ystr)
+                            if verbose:
+                                    print("D("+xstr+","+ystr+")","D(",dxidx,dyidx,") C",dcidx,cidx,cstr)
+                            #m.AtDirect(dxidx,dyidx, q.GetVecStateN(dcidx).Re(), q.GetVecStateN(dcidx).Im())
+                            m[dxidx,dyidx] = q[dcidx]
+                            #mt.AtDirect(dxidx,dyidx, q.GetVecStateN(dcidx).Re(), q.GetVecStateN(dcidx).Im())
+                            mt[dxidx,dyidx] = q[dcidx]
+            if verbose:
+                    m.PrMatlab()
+            #mf=m.Calc_D_dot_DT() # D * D'
+            mf = np.matmul(m, np.matrix.conjugate(m))
+            #sd=mf.SpectralDecomposition()
+            #sd.eigenvalues.Chop()
+            #ev_count=sd.eigenvalues.NonZeros()
+            (ev,evec)=eigen_decomposition(mf)
+            ev=chop(ev)
+            ev_count = np.count_nonzero(ev)
+
+            if verbose:
+                    print("non zero:", ev_count)
+            if (ev_count==1) and (len(i[0])==1):
+                idxtoremove=idxtoremove+i[0]
+                
+            if (ev_count==1) and (len(i[1])==1):
+                idxtoremove=idxtoremove+i[1]
+                
+            res=res + [[ev_count, [i[0], i[1]]]]
+    return res,idxtoremove
+
+def detection_entanglement_by_paritition_division( q, verbose = 0 ):
+    [r,idxtoremove]=ent_detection_by_paritition_division( q, verbose )
+    print("idx to remove", idxtoremove)
+    print("all partitions")
+    for i in r:
+        print(i)
+    fp = filtered_data_for_paritition_division( r, idxtoremove )
+    if len(fp)==0:
+        print("register is fully separable")
+    else:
+        print("raw final filtered data")
+        for i in fp:
+            print(i)
+    
+    cfp = set(fp)
+    ffp = set(fp)
+    
+    for i in fp:
+        if i in cfp:
+            cfp.remove(i)
+        for e in cfp:
+            if (set(i) < set(e)) and (len(i)!=len(e)):
+                if e in ffp:
+                    ffp.remove(e)
+    print("final filtered data")
+    for i in ffp:
+        print(i)
+
 
