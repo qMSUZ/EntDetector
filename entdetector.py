@@ -1352,6 +1352,7 @@ def create_random_unitary_matrix(dim, o):
 # matrix display
 #
 
+
 def pretty_matrix_print(x, _pprecision=4):
     with np.printoptions(precision = _pprecision, suppress=True):
         print(x)
@@ -1406,7 +1407,7 @@ def partititon_disp(kappa):
                 fstr=fstr +string
         return '{'+fstr+'}'
 
-def partititon_as_list(kappa):
+def make_partititon_as_list(kappa):
         n=len(kappa)
         m=max(kappa)
         fstr=[]
@@ -1541,8 +1542,9 @@ def filtered_data_for_paritition_division( r, idxtoremove ):
 def bin2dec(s):
     return int(s, 2)
 
-def ent_detection_by_paritition_division( q, verbose = 0 ):
-    s = q.size
+def ent_detection_by_paritition_division( q, nqubits, verbose = 0 ):
+    #s = q.size
+    s = nqubits
     # generation of all two partitite divisions of given
     # set which is build from the quantum register q
     res = [ ]
@@ -1550,13 +1552,13 @@ def ent_detection_by_paritition_division( q, verbose = 0 ):
     k = [0] * s
     M = [0] * s
     p = 2
-    p_initialize_first(k, M, p)
+    partititon_p_initialize_first(k, M, p)
     lp = []
     lp = lp + [make_partititon_as_list(k)]
-    while p_next_partition(k, M, p):
+    while partition_p_next(k, M, p):
         lp = lp + [make_partititon_as_list(k)]
     for i in lp:
-            if verbose:
+            if verbose==1:
                     print(i[0], i[1])
             mxv=2**len(i[0])
             myv=2**len(i[1])
@@ -1592,9 +1594,11 @@ def ent_detection_by_paritition_division( q, verbose = 0 ):
                             #mt.AtDirect(dxidx,dyidx, q.GetVecStateN(dcidx).Re(), q.GetVecStateN(dcidx).Im())
                             mt[dxidx,dyidx] = q[dcidx]
             if verbose:
-                    m.PrMatlab()
+                    #m.PrMatlab()
+                    print("m matrix")
+                    print(m)
             #mf=m.Calc_D_dot_DT() # D * D'
-            mf = np.matmul(m, np.matrix.conjugate(m))
+            mf = m @ m.transpose()
             #sd=mf.SpectralDecomposition()
             #sd.eigenvalues.Chop()
             #ev_count=sd.eigenvalues.NonZeros()
@@ -1613,8 +1617,8 @@ def ent_detection_by_paritition_division( q, verbose = 0 ):
             res=res + [[ev_count, [i[0], i[1]]]]
     return res,idxtoremove
 
-def detection_entanglement_by_paritition_division( q, verbose = 0 ):
-    [r,idxtoremove]=ent_detection_by_paritition_division( q, verbose )
+def detection_entanglement_by_paritition_division( q, nqubits, verbose = 0 ):
+    [r,idxtoremove]=ent_detection_by_paritition_division( q, nqubits, verbose )
     print("idx to remove", idxtoremove)
     print("all partitions")
     for i in r:
@@ -1640,5 +1644,6 @@ def detection_entanglement_by_paritition_division( q, verbose = 0 ):
     print("final filtered data")
     for i in ffp:
         print(i)
+
 
 
