@@ -696,6 +696,88 @@ def create_werner_two_qubit_state(p, state="Bell+"):
     qden = (p * qdentmp) + ((1-p) * 0.25 * np.eye(4))
     return qden
 
+def create_chessboard_state(a,b,c,d,m,n):
+    """
+        Create a Chessboard state
+
+        Parameters
+        ----------
+        a,b,c,d,m,n : integer
+            The real arguments
+
+        Returns
+        -------
+        density matrix
+            Numpy array for quantum state
+            expressed as density matrix
+
+
+        Examples
+        --------
+        Create a Chessboard state
+        >>> q0=create_chessboard_state(0.25, 0.5, 0.5, 0.1, 0.2, 0.8)
+        >>> print(q0)
+            [[ to fix  ]]
+
+
+        """
+    s = a * np.conj(c) / np.conj(n)
+    t = a * d / m
+
+    v1 = np.array([m, 0, s, 0, n, 0, 0, 0, 0])
+    v2 = np.array([0, a, 0, b, 0, c, 0, 0, 0])
+    v3 = np.array([(np.conj(n)), 0, 0, 0, (-np.conj(m)), 0, t, 0, 0])
+    v4 = np.array([0, (np.conj(b)), 0, (-np.conj(a)), 0, 0, 0, d, 0])
+
+    rho = np.outer(np.transpose(v1), v1) + np.outer(np.transpose(v2), v2) + np.outer(np.transpose(v3), v3) + np.outer(np.transpose(v4), v4)
+
+    rho = rho/np.trace(rho)
+
+    return rho
+
+def create_gisin_state(lambdaX, theta):
+    """
+            Create a gisin state
+
+            Parameters
+            ----------
+            lambdaX: float
+                The real argument in 0 between 1 (closed interval)
+            theta: float
+                The real argument
+
+        
+            Returns
+            -------
+            density matrix
+                Numpy array for Gisin state
+                expressed as density matrix
+
+            Examples
+            --------
+            Create a Gisin state
+            >>> q0=create_gisin_state(0.25, 2)
+            >>> print(q0)            
+                [[0.375      0.         0.         0.        ]
+                 [0.         0.20670545 0.09460031 0.        ]
+                 [0.         0.09460031 0.04329455 0.        ]
+                 [0.         0.         0.         0.375     ]]
+    """
+    rho_theta = np.array([[0, 0, 0, 0],
+                [0, (np.sin(theta) ** 2), (-np.sin(2 * theta) / 2), 0],
+                [0, (-np.sin(2 * theta) / 2), (np.cos(theta) ** 2), 0],
+                [0, 0, 0, 0]])
+
+    rho_uu_dd =np.array(
+                [[1, 0, 0, 0],
+                 [0, 0, 0, 0],
+                 [0, 0, 0, 0],
+                 [0, 0, 0, 1]])
+
+    gisin_state = lambdaX * rho_theta + (1- lambdaX) * rho_uu_dd / 2
+
+    return gisin_state
+
 def create_x_two_qubit_random_state():
     antydiagval = np.random.rand(2)
 
