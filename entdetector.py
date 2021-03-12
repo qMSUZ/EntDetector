@@ -1116,6 +1116,9 @@ def entropy(qden, logbase="e"):
 #
 
 def negativity( qden, d=2, n=2 ):
+    if np.isscalar(qden):
+        raise DimensionError("Wrong dimension of argument!")
+        return None
     dim = int(np.log(d ** n)/np.log(d))
     qdentmp = partial_tranpose(qden, [[dim,dim], [dim,dim]], [0, 1])
     negativity_value = (np.linalg.norm(qdentmp, 'nuc') - 1.0)/2.0
@@ -1126,6 +1129,9 @@ def negativity( qden, d=2, n=2 ):
 #
 
 def concurrence( qden ):
+    if np.isscalar(qden):
+        raise DimensionError("Wrong dimension of argument!")
+        return None
     pauliy=np.array([0.0, -1.0J, 1.0J, 0.0]).reshape(2,2)
     qden=np.matrix(qden)
     R = qden * np.kron(pauliy, pauliy) * qden.getH() * np.kron(pauliy, pauliy)
