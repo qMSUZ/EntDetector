@@ -679,12 +679,12 @@ def create_werner_two_qubit_state(p, state="Bell+"):
         --------
         Create of register for two qubit to a Werner state
         between max entangled state and mixed state
-        >>> q0=create_werner_two_qubit_state(2, state="Bell+")
+        >>> q0=create_werner_two_qubit_state(0.25, state="Bell+")
         >>> print(q0)
-        [[ 0.75  0.    0.    1.  ]
-         [ 0.   -0.25  0.    0.  ]
-         [ 0.    0.   -0.25  0.  ]
-         [ 1.    0.    0.    0.75]]
+        [[0.3125 0.     0.     0.125 ]
+         [0.     0.1875 0.     0.    ]
+         [0.     0.     0.1875 0.    ]
+         [0.125  0.     0.     0.3125]]
     """
     if state=="Bell+":
         q = create_qubit_bell_state()
@@ -1096,6 +1096,28 @@ def print_sas_table( sas_table, statistics=0):
 #
 
 def entropy(qden, logbase="e"):
+    """
+        Computes the entropy of a density matrix
+        Parameters
+        ----------
+        qden : numpy array
+            The parameter qden represents a density matrix
+        logbase : string
+            A string represents the base of the logarithm: 
+               "e", "2", and "10".
+
+        Returns
+        -------
+        entropy_val : float
+            The value of entropy
+        Examples
+        --------
+        Calculate the value of entropy of the density matrix
+        >>> qden=create_x_two_qubit_random_state()
+        >>> q0=entropy(qden, "10")
+        >>> print(q0)
+            0.5149569745101069
+    """
     if np.isscalar(qden):
         raise DimensionError("Wrong dimension of argument!")
         return None
@@ -1116,6 +1138,31 @@ def entropy(qden, logbase="e"):
 #
 
 def negativity( qden, d=2, n=2 ):
+    """
+        Computes a negativity of bipartite density matrix
+        Parameters
+        ----------
+        qden : numpy array
+            The parameter qden represents a density matrix
+        d : integer
+            the number of degrees of freedom for the qudit d,
+        n : integer
+            number of qudits for the created state
+
+        Returns
+        -------
+        negativity_value : float
+            The value of negativity of bipartite density matrix
+
+        Examples
+        --------
+        Calculate the value for a negativity of bipartite density matrix
+        >>> q = create_wstate(d)
+        >>> qden = vector_state_to_density_matrix( q )
+        >>> q0=negativity(qden)
+        >>> print(q0)
+            0.4999999999999998
+    """
     if np.isscalar(qden):
         raise DimensionError("Wrong dimension of argument!")
         return None
@@ -1129,6 +1176,25 @@ def negativity( qden, d=2, n=2 ):
 #
 
 def concurrence( qden ):
+    """
+        Computes value a concurrence for a two-qubit state
+        Parameters
+        ----------
+        qden : numpy array
+            The parameter qden represents a density matrix
+        Returns
+        -------
+        c : float
+            The value of concurrence of two-qubit state
+
+        Examples
+        --------
+        Calculate the value of concurrence for a two-qubit state
+        >>> qden=create_werner_two_qubit_state(0.79)
+        >>> q0=concurrence(qden)
+        >>> print(q0)
+            0.6849999999999994
+    """
     if np.isscalar(qden):
         raise DimensionError("Wrong dimension of argument!")
         return None

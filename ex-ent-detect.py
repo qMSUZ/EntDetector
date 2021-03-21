@@ -39,6 +39,12 @@ from entdetector import *
 import numpy as np
 
 #
+# Calculate the value of entropy of the density matrix
+qden=create_x_two_qubit_random_state()
+q0=entropy(qden)
+print("Entroy = ",q0)
+
+#
 # Schmidt decomposition of Bell 1.0/sqrt{2} |00> + |11>
 #
 q = create_qubit_bell_state()
