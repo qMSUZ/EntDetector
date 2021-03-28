@@ -970,8 +970,25 @@ def schmidt_decomposition_for_vector_pure_state(q, decomposition_shape):
     
     return s, u, vh
 
-def schmidt_decomposition_for_square_operator(qden, decomposition_shape):
-    pass
+def schmidt_decomposition_operator(qden, decomposition_shape):
+    schmidt_shape=decomposition_shape
+    schmidt_shape_np=np.zeros((1,2))
+    schmidt_shape_np[0,0] = schmidt_shape[0]; schmidt_shape_np[0,1] = schmidt_shape[1]
+    schmidt_shape_np = np.concatenate((schmidt_shape_np,schmidt_shape_np))
+    qqden = qden.reshape(int(np.prod(schmidt_shape_np)), 1)
+
+    qqden_after_swap=np.reshape( np.transpose( np.reshape(qqden, schmidt_shape * 2), (0,2,1,3) ), (int(np.prod(schmidt_shape_np)), 1))
+
+    schmidt_shape_final_decomp = np.prod(schmidt_shape_np, axis=0)
+    s, e, f = schmidt_decomposition_for_vector_pure_state(qqden_after_swap, (int(schmidt_shape_final_decomp[0]), int(schmidt_shape_final_decomp[1])))
+
+    elist=[None] * len(s)
+    flist=[None] * len(s)
+    for idx in range(len(s)):
+        elist[idx] = e[idx].reshape(schmidt_shape[0], schmidt_shape[0])
+    for idx in range(len(s)):
+        flist[idx]=f[idx].reshape(schmidt_shape[1], schmidt_shape[1])
+    return s,elist,flist
 
 def schmidt_rank_for_vector_pure_state(q, decomposition_shape):
     """
@@ -1003,6 +1020,20 @@ def schmidt_rank_for_vector_pure_state(q, decomposition_shape):
     m = q.reshape(d1, d2)
     sch_rank = np.linalg.matrix_rank(m)
     return sch_rank
+
+def schmidt_rank_for_operator(qden, decomposition_shape):
+    schmidt_shape=decomposition_shape
+    schmidt_shape_np=np.zeros((1,2))
+    schmidt_shape_np[0,0] = schmidt_shape[0]; schmidt_shape_np[0,1] = schmidt_shape[1]
+    schmidt_shape_np = np.concatenate((schmidt_shape_np,schmidt_shape_np))
+    qqden = qden.reshape(int(np.prod(schmidt_shape_np)), 1)
+
+    qqden_after_swap=np.reshape( np.transpose( np.reshape(qqden, schmidt_shape * 2), (0,2,1,3) ), (int(np.prod(schmidt_shape_np)), 1))
+
+    schmidt_shape_final_decomp = np.prod(schmidt_shape_np, axis=0)
+    schrank = schmidt_rank_for_vector_pure_state(qqden_after_swap, (int(schmidt_shape_final_decomp[0]), int(schmidt_shape_final_decomp[1])))
+
+    return schrank
 
 def reconstruct_state_after_schmidt_decomposition(s, e, f):
     """
