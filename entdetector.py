@@ -38,7 +38,7 @@
 """
 First version created on Sat Nov 21 18:33:49 2020
 
-@author: Marek Sawerwain
+@author: Marek Sawerwain, Joanna Wiśniewska, Marek Wróblewski, Roman Gielerak
 """
 
 import numpy as np
@@ -601,6 +601,13 @@ def create_ghz_state(d, n):
     step = np.sum(np.power(d, range(n)))
     g[range(d) * step] = 1/np.sqrt(d)
     return g
+
+def create_noon_state(d, N, theta):
+     g = np.zeros(d * d, dtype=complex)
+     g[N*d] = 1.0/np.sqrt(2)
+     g[N] = np.exp(1j * N * theta) *  (1.0/np.sqrt(2))
+     return g
+
 
 def create_wstate(n):
     """
