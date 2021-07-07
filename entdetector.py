@@ -42,13 +42,15 @@ First version created on Sat Nov 21 18:33:49 2020
 """
 
 import numpy as np
-import scipy
-import cvxopt
+#import scipy
+#import cvxopt
 
 import random as rd
 
 import math
 
+# smallest value for entropy calculations
+precision_for_entrpy_calc = 0.00001
 
 class DimensionError(Exception):
     """DimensionError"""
@@ -832,7 +834,7 @@ def create_x_two_qubit_random_state():
 #
 
 def vector_state_to_density_matrix(q):
-    return np.outer(q, q)
+    return np.outer(q, np.transpose(q))
 
 def create_density_matrix_from_vector_state(q):
     return vector_state_to_density_matrix(q)
@@ -1161,8 +1163,9 @@ def entropy(qden, logbase="e"):
         return None
     eigval,evec = eigen_decomposition(qden)
     entropy_val = 0.0
-    for e in eigval:
-        if chop(e) != 0:
+    for eval in eigval:
+        e=eval
+        if chop(e) >= precision_for_entrpy_calc:
             if logbase == "e":
                 entropy_val = entropy_val + e * np.log(e)
             if logbase == "2":
@@ -1205,9 +1208,9 @@ def negativity( qden, d=2, n=2 ):
         raise DimensionError("Wrong dimension of argument!")
         return None
     dim = int(np.log(d ** n)/np.log(d))
-    qdentmp = partial_tranpose(qden, [[dim,dim], [dim,dim]], [0, 1])
+    qdentmp = partial_transpose(qden, [[dim,dim], [dim,dim]], [0, 1])
     negativity_value = (np.linalg.norm(qdentmp, 'nuc') - 1.0)/2.0
-    return negativity_value
+    return chop(negativity_value)
 
 #
 # Concurrence
@@ -1260,7 +1263,7 @@ def concurrence( qden ):
 # reference implementation directly based on 
 # https://github.com/qutip/qutip/blob/master/qutip/partial_transpose.py
 # 
-def partial_tranpose_main_routine(rho, dims, mask):
+def partial_transpose_main_routine(rho, dims, mask):
     mask = [int(i) for i in mask]
     nsys = len(mask)
     pt_dims = np.arange(2 * nsys).reshape(2, nsys).T
@@ -1270,24 +1273,67 @@ def partial_tranpose_main_routine(rho, dims, mask):
 
     return data
 
-def partial_tranpose(rho, dims, no_tranpose):
-    return partial_tranpose_main_routine(rho, dims, no_tranpose)
+def partial_transpose(rho, dims, no_tranpose):
+    return partial_transpose_main_routine(rho, dims, no_tranpose)
 
-def partial_tranpose_for_qubit(rho, no_tranpose):
+def partial_transpose_for_qubit(rho, no_tranpose):
     pass
 
-def partial_tranpose_for_qutrits(rho, no_tranpose):
+def partial_transpose_for_qutrits(rho, no_tranpose):
     pass
 
-#
-#
-#
-
-#
-# directly based on the code and discussion:
-#   https://github.com/cvxgrp/cvxpy/issues/563
-#
 def partial_trace_main_routine(rho, dims, axis=0):
+    """
+        Computes a partial trace of a given density matrix rho.
+        Implementation directly based on
+            https://github.com/cvxgrp/cvxpy/issues/563
+
+        Parameters
+        ----------
+        rho : numpy array
+            The parameter rho represents a density matrix
+        dims : list
+            A list containing dimensions of systems from which matrix rho
+            was created, e.g. if dims=[3, 2] then rho is a density matrix of
+            a state constructed of one qutrit (freedom level = 3) and one
+            qubit (freedom level = 2)
+        axis : integer
+            The parameter axis points out the subsystem to be traced out
+            (the subsystems are numbered from 0)
+
+        Returns
+        -------
+        data : numpy array
+            The density matrix after tracing out pointed subsystem  
+
+        Examples
+        --------
+        Calculate the partial trace of matrix rho_{ABCD} by extracting
+        the subsystem C
+        >>> rho_A = np.random.rand(4, 4) + 1j*np.random.rand(4, 4)
+        >>> rho_A /= np.trace(rho_A)
+        >>> rho_B = np.random.rand(2, 2) + 1j*np.random.rand(2, 2)
+        >>> rho_B /= np.trace(rho_B)
+        >>> rho_C = np.random.rand(2, 2) + 1j*np.random.rand(2, 2)
+        >>> rho_C /= np.trace(rho_C)
+        >>> rho_D = np.random.rand(3, 3) + 1j*np.random.rand(3, 3)
+        >>> rho_D /= np.trace(rho_D)
+        >>> rho_AB = np.kron(rho_A, rho_B)
+        >>> rho_ABC = np.kron(rho_AB, rho_C)
+        >>> rho_ABCD = np.kron(rho_ABC, rho_D)
+        >>> rho_ABC_test = partial_trace_main_routine(rho_ABCD, [4, 2, 2, 3], axis=3)
+        >>> rho_AB_test = partial_trace_main_routine(rho_ABC_test, [4, 2, 2], axis=2)
+        >>> rho_A_test = partial_trace_main_routine(rho_AB_test, [4, 2], axis=1)
+        >>> rho_B_test = partial_trace_main_routine(rho_AB_test, [4, 2], axis=0)
+        >>> print("rho_ABC test correct? ", np.allclose(rho_ABC_test, rho_ABC))
+            rho_ABC test correct?  True
+        >>> print("rho_AB test correct? ", np.allclose(rho_AB_test, rho_AB))
+            rho_AB test correct?  True
+        >>> print("rho_A test correct? ", np.allclose(rho_A_test, rho_A))
+            rho_A test correct?  True
+        >>> print("rho_B test correct? ", np.allclose(rho_B_test, rho_B))
+            rho_B test correct?  True
+    """
     dims_tmp = np.array(dims)
     reshaped_rho = rho.reshape(np.concatenate((dims_tmp, dims_tmp), axis=None))
 
@@ -1750,11 +1796,11 @@ def ent_detection_by_paritition_division( q, nqubits, verbose = 0 ):
     while partition_p_next(k, M, p):
         lp = lp + [make_partititon_as_list(k)]
     for i in lp:
-            if verbose==1:
+            if verbose==1 or verbose==2:
                     print(i[0], i[1])
             mxv=2**len(i[0])
             myv=2**len(i[1])
-            if verbose:
+            if verbose==1:
                     print(mxv,"x",myv)
             #m=qcs.Matrix(mxv, myv)
             m  = np.zeros((mxv, myv), dtype=complex)
@@ -1779,13 +1825,13 @@ def ent_detection_by_paritition_division( q, nqubits, verbose = 0 ):
                             dcidx=bin2dec(cidx)
                             dxidx=bin2dec(xstr)
                             dyidx=bin2dec(ystr)
-                            if verbose:
+                            if verbose==1:
                                     print("D("+xstr+","+ystr+")","D(",dxidx,dyidx,") C",dcidx,cidx,cstr)
                             #m.AtDirect(dxidx,dyidx, q.GetVecStateN(dcidx).Re(), q.GetVecStateN(dcidx).Im())
                             m[dxidx,dyidx] = q[dcidx]
                             #mt.AtDirect(dxidx,dyidx, q.GetVecStateN(dcidx).Re(), q.GetVecStateN(dcidx).Im())
                             mt[dxidx,dyidx] = q[dcidx]
-            if verbose:
+            if verbose==1:
                     #m.PrMatlab()
                     print("m matrix")
                     print(m)
@@ -1798,8 +1844,9 @@ def ent_detection_by_paritition_division( q, nqubits, verbose = 0 ):
             ev=chop(ev)
             ev_count = np.count_nonzero(ev)
 
-            if verbose:
+            if verbose==1 or verbose==2:
                     print("non zero:", ev_count)
+                    print("ev=",ev)
             if (ev_count==1) and (len(i[0])==1):
                 idxtoremove=idxtoremove+i[0]
                 
@@ -1807,6 +1854,8 @@ def ent_detection_by_paritition_division( q, nqubits, verbose = 0 ):
                 idxtoremove=idxtoremove+i[1]
                 
             res=res + [[ev_count, [i[0], i[1]]]]
+            if verbose==1 or verbose==2:
+                print()
     return res,idxtoremove
 
 def detection_entanglement_by_paritition_division( q, nqubits, verbose = 0 ):
