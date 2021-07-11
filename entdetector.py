@@ -1273,13 +1273,63 @@ def partial_transpose_main_routine(rho, dims, mask):
 
     return data
 
-def partial_transpose(rho, dims, no_tranpose):
-    return partial_transpose_main_routine(rho, dims, no_tranpose)
+def partial_transpose(rho, dims, no_transpose):
+    """
+        Computes a partial transpose of a given density matrix rho.
+        Implementation directly based on
+        https://github.com/qutip/qutip/blob/master/qutip/partial_transpose.py
+        Parameters
+        ----------
+        rho : numpy array
+            The parameter rho represents a density matrix
+        dims : list
+            A list of lists where each sublist describes dimensions of each
+            subsystem
+        no_transpose : list
+            A list of boolean values (0,1) where the number of elements is equal to
+            the number of subsystems. If value is 1 then the partial
+            transposition is performed on the pointed out subsystem
+        Returns
+        -------
+        data : numpy array
+            The matrix rho after the partial transposition operation
+        Examples
+        --------
+        Calculate the partial transpose of matrix rho_AB sized 6x6. Let us
+        assume that rho_AB is a density matrix calculated for bipartite system
+        of one qubit (freedom level d=2) and one qutrit (d=3). The partial
+        transposition is calculated for the first and then for the second
+        subsystem
+        >>> print(rho_AB)
+            [[11 12 13 14 15 16]
+             [21 22 23 24 25 26]
+             [31 32 33 34 35 36]
+             [41 42 43 44 45 46]
+             [51 52 53 54 55 56]
+             [61 62 63 64 65 66]]
+        >>> rho_AB_transposed = partial_transpose(rho_AB, [[2,2],[3,3]], [1, 0])
+        >>> print(rho_AB_transposed)
+            [[11 12 13 41 42 43]
+             [24 25 26 54 55 56]
+             [14 15 16 44 45 46]
+             [31 32 33 61 62 63]
+             [21 22 23 51 52 53]
+             [34 35 36 64 65 66]]
+        >>> rho_AB_transposed = partial_transpose(rho_AB, [[2,2],[3,3]], [0, 1])
+        >>> print(rho_AB_transposed)
+            [[11 24 14 31 21 34]
+             [12 25 15 32 22 35]
+             [13 26 16 33 23 36]
+             [41 54 44 61 51 64]
+             [42 55 45 62 52 65]
+             [43 56 46 63 53 66]]
+    """
+    return partial_transpose_main_routine(rho, dims, no_transpose)
 
-def partial_transpose_for_qubit(rho, no_tranpose):
+def partial_transpose_for_qubit(rho, no_transpose):
     pass
 
-def partial_transpose_for_qutrits(rho, no_tranpose):
+def partial_transpose_for_qutrits(rho, no_transpose):
     pass
 
 def partial_trace_main_routine(rho, dims, axis=0):
@@ -1308,8 +1358,8 @@ def partial_trace_main_routine(rho, dims, axis=0):
 
         Examples
         --------
-        Calculate the partial trace of matrix rho_{ABCD} by extracting
-        the subsystem C
+        Calculate the partial trace of matrix rho_{ABCD} by extracting its 
+        subsystems
         >>> rho_A = np.random.rand(4, 4) + 1j*np.random.rand(4, 4)
         >>> rho_A /= np.trace(rho_A)
         >>> rho_B = np.random.rand(2, 2) + 1j*np.random.rand(2, 2)
