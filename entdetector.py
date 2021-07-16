@@ -60,6 +60,10 @@ class ArgumentValueError(Exception):
     """ArgumentValueError"""
     pass
 
+class DensityMatrixDimensionError(Exception):
+    """DensityMatrixDimensionError"""
+    pass
+
 # code based on chop
 # discussed at:
 #   https://stackoverflow.com/questions/43751591/does-python-have-a-similar-function-of-chop-in-mathematica
@@ -1937,4 +1941,60 @@ def detection_entanglement_by_paritition_division( q, nqubits, verbose = 0 ):
         print(i)
 
 
+
+def bravyi_theorem_for_two_qubit_mixed_state_check(qden, margin_A, margin_B):
+    if (len(qden)==4 and len(qden[0])==4):
+        eigenval, eigenvec = eigen_decomposition(qden)
+        #margin_A = partial_trace(qden,1)
+        #margin_B = partial_trace(qden,0)
+        eigenval_A, eigenvec_A = eigen_decomposition(margin_A)
+        eigenval_B, eigenvec_B = eigen_decomposition(margin_B)
+        if (eigenval_A[0]>=eigenval[0]+eigenval[1] and eigenval_B[0]>=eigenval[0]+eigenval[1] and eigenval_A[0]+eigenval_B[0]>=2*eigenval[0]+eigenval[1]+eigenval[2] and abs(eigenval_A[0]-eigenval_B[0]<=min(eigenval[3]-eigenval[1],eigenval[2]-eigenval[0]))):
+            return True
+        else:
+            return False
+    else:
+        return False
+
+
+def density_matrix_trace_check(qden):
+    """
+        Checks if qden is a correct density matrix (its trace equals one)
+
+        Parameters
+        ----------
+        qden : numpy array
+
+        Returns
+        -------
+        bool
+            If the function returns 1, then qden is a density matrix (and 0 otherwise).
+        
+        Examples
+        --------
+        Check the correctness of a density matrix for the correct pure quantum state d
+        >>> d = np.ndarray(shape=(2),dtype=float)
+        >>> d[0]=1/math.sqrt(2)
+        >>> d[1]=1/math.sqrt(2)
+        >>> rho_D = vector_state_to_density_matrix(d)
+        >>> print(density_matrix_trace_check(rho_D))
+            True
+        Check the correctness of a density matrix for the not correct quantum state d
+        >>> d = np.ndarray(shape=(2),dtype=float)
+        >>> d[0]=1/math.sqrt(2)
+        >>> d[1]=0
+        >>> rho_D = vector_state_to_density_matrix(d)
+        >>> print(density_matrix_trace_check(rho_D))
+            False
+        Check the correctness of the density matrix rho_C for the correct mixed quantum state
+        >>> rho_C = create_mixed_state(2,2)
+        >>> print(density_matrix_trace_check(rho_C))
+            True
+
+    """
+    x = np.trace(qden)
+    if (math.isclose(np.real(x), 1, abs_tol=0.000001) and math.isclose(np.imag(x), 0, abs_tol=0.000001)):
+        return True
+    else:
+        return False
 
