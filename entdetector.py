@@ -42,7 +42,7 @@ First version created on Sat Nov 21 18:33:49 2020
 """
 
 import numpy as np
-#import scipy
+import scipy
 #import cvxopt
 
 import random as rd
@@ -62,7 +62,8 @@ class ArgumentValueError(Exception):
 
 class DensityMatrixDimensionError(Exception):
     """DensityMatrixDimensionError"""
-    pass
+    def __init__(self, message):
+        self.message = message
 
 # code based on chop
 # discussed at:
@@ -1162,9 +1163,6 @@ def entropy(qden, logbase="e"):
         >>> print(q0)
             0.5149569745101069
     """
-    if np.isscalar(qden):
-        raise DimensionError("Wrong dimension of argument!")
-        return None
     eigval,evec = eigen_decomposition(qden)
     entropy_val = 0.0
     for eval in eigval:
@@ -1208,9 +1206,6 @@ def negativity( qden, d=2, n=2 ):
         >>> print(q0)
             0.4999999999999998
     """
-    if np.isscalar(qden):
-        raise DimensionError("Wrong dimension of argument!")
-        return None
     dim = int(np.log(d ** n)/np.log(d))
     qdentmp = partial_transpose(qden, [[dim,dim], [dim,dim]], [0, 1])
     negativity_value = (np.linalg.norm(qdentmp, 'nuc') - 1.0)/2.0
@@ -1240,9 +1235,6 @@ def concurrence( qden ):
         >>> print(q0)
             0.6849999999999994
     """
-    if np.isscalar(qden):
-        raise DimensionError("Wrong dimension of argument!")
-        return None
     pauliy=np.array([0.0, -1.0J, 1.0J, 0.0]).reshape(2,2)
     qden=np.matrix(qden)
     R = qden * np.kron(pauliy, pauliy) * qden.getH() * np.kron(pauliy, pauliy)
@@ -1990,11 +1982,59 @@ def density_matrix_trace_check(qden):
         >>> rho_C = create_mixed_state(2,2)
         >>> print(density_matrix_trace_check(rho_C))
             True
-
     """
     x = np.trace(qden)
     if (math.isclose(np.real(x), 1, abs_tol=0.000001) and math.isclose(np.imag(x), 0, abs_tol=0.000001)):
         return True
     else:
         return False
+
+
+def calculate_purity(qden):
+    """
+        Checks if qden is a density matrix of a pure state
+
+        Parameters
+        ----------
+        qden : numpy array
+
+        Returns
+        -------
+        t : tuple
+            The first element of the tuple is Boolean and answers the question,
+            if qden is a pure state density matrix. The second element of the tuple
+            is the trace of squared qden (if its value equals 1, then qden represents
+            a pure state; if its value is lower than 1, then qden represents
+            a mixed state).
+        
+        Examples
+        --------
+        Check if rho_A is a density matrix of a pure state
+        >>> A = create_max_entangled_pure_state(3)
+        >>> rho_A = vector_state_to_density_matrix(A)
+        >>> print(calculate_purity(rho_A))
+            (True, 1)
+        Check if rho_B is a density matrix of a pure state
+        >>> rho_B = create_mixed_state(2,2)
+        >>> print(calculate_purity(rho_B))
+            (False, 0.25)
+    """
+    if not (np.ndim(qden) == 2):
+        raise DensityMatrixDimensionError("Argument is not two dimensional matrix!")
+        return None
+    if density_matrix_trace_check(qden):
+        x = np.matmul(qden,qden)
+        y = np.trace(x)
+        if (math.isclose(np.real(y), 1, abs_tol=0.000001) and math.isclose(np.imag(y), 0, abs_tol=0.000001)):
+            t = True, 1
+            return t
+        else:
+            t = False, y
+            return t
+    else:
+        print('wyjątek! macierz nie jest poprawna macierza gestosci')
+
+
+
+
 
