@@ -54,11 +54,13 @@ precision_for_entrpy_calc = 0.00001
 
 class DimensionError(Exception):
     """DimensionError"""
-    pass
+    def __init__(self, message):
+        self.message = message
 
 class ArgumentValueError(Exception):
     """ArgumentValueError"""
-    pass
+    def __init__(self, message):
+        self.message = message
 
 class DensityMatrixDimensionError(Exception):
     """DensityMatrixDimensionError"""
@@ -1550,7 +1552,7 @@ def create_random_qudit_state(d, n, o=0): # o=0 - only real numbers, 1 - complex
                 b = rd.uniform(-1,1)
             F[i] = complex(a,b)
     else:
-        raise ValueError('Option has to be: 0, 1 or 2')
+        raise ArgumentValueError('Option has to be: 0, 1 or 2')
         return None
     #normalization
     con = np.matrix.conjugate(F)
@@ -1563,7 +1565,7 @@ def create_random_qudit_state(d, n, o=0): # o=0 - only real numbers, 1 - complex
 #o=0 - only real numbers, 1 - complex numbers, 2 - mixed numbers (~ 1/2 complex numbers)
 def create_random_density_state(d, n, o=0):
     if o not in (0,1,2):
-        raise ValueError('Option has to be: 0, 1 or 2')
+        raise ArgumentValueError('Option has to be: 0, 1 or 2')
         return None
     else:
         vs = create_random_qudit_state(d,n,o)
@@ -1593,8 +1595,8 @@ def create_random_density_state_mix(d, n, o=0):
                     b = rd.uniform(-1,1)
                 F[j,i] = complex(a,b)
     else:
-        print('Option has to be: 0, 1 or 2')
-        return 0
+        raise ArgumentValueError('Option has to be: 0, 1 or 2')
+        return None
     rho = np.add(F, np.matrix.conjugate(F))
     rho = np.divide(rho, 2)
     return rho
@@ -1622,8 +1624,8 @@ def create_random_unitary_matrix(dim, o):
                     b=rd.uniform(0,1)
                 F[j,i]=complex(a,b)/np.sqrt(2)
     else:
-        print('Option has to be: 0, 1 or 2')
-        return 0
+        raise ArgumentValueError('Option has to be: 0, 1 or 2')
+        return None
     Q,R=np.linalg.qr(F)
     d=np.diagonal(R)
     ph=d/np.absolute(d)
