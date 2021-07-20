@@ -43,7 +43,7 @@ First version created on Sat Nov 21 18:33:49 2020
 
 import numpy as np
 import scipy
-#import cvxopt
+import cvxpy
 
 import random as rd
 
@@ -841,7 +841,7 @@ def create_x_two_qubit_random_state():
 #
 
 def vector_state_to_density_matrix(q):
-    return np.outer(q, np.transpose(q))
+    return np.outer(q, np.transpose(q.conj()))
 
 def create_density_matrix_from_vector_state(q):
     return vector_state_to_density_matrix(q)
@@ -1935,21 +1935,63 @@ def detection_entanglement_by_paritition_division( q, nqubits, verbose = 0 ):
         print(i)
 
 
+def calculate_trace_norm(qden):
+    pass
 
-def bravyi_theorem_for_two_qubit_mixed_state_check(qden, margin_A, margin_B):
+def calculate_l1norm_coherence(qden):
+    pass
+
+def bravyi_theorem_for_two_qubit_mixed_state_check(qden, rho_A, rho_B):
+    """
+        Function checks if qden represents 2-qubit mixed state rho_(AB) for
+        margins rho_A and rho_B, according to the theorem from: S. Bravyi,
+        Requirments for compatibility between local and multipartite quantum
+        states, quant-ph/0301014
+
+        Parameters
+        ----------
+        qden, rho_A, rho_B : numpy arrays
+            The parameter qden represents a density matrix, and rho_A, rho_B
+            are potential margins of qden
+
+        Returns
+        -------
+        Boolean value
+        eigenvalues_Bravyi: list
+            The boolean value informs if rho_A and rho_B are margions of qden
+            according to Bravyi theorem. In eigenvalues_Bravyi first two values
+            are minimal eigenvalues of rho_A and rho_B, and the next four are
+            eigenvalues of qden in descending order
+
+        Examples
+        --------
+        >>> qAB = create_isotropic_qubit_state(0.15)
+        >>> qA = partial_trace(qAB, 1)
+        >>> qB = partial_trace(qAB, 0)
+        >>> print(qA)
+        >>> print(qB)
+        >>> rslt=bravyi_theorem_for_two_qubit_mixed_state_check(qAB, qA, qB)
+        >>> print("rslt =", rslt)
+
+    """
     if (len(qden)==4 and len(qden[0])==4):
         eigenval, eigenvec = eigen_decomposition(qden)
-        #margin_A = partial_trace(qden,1)
-        #margin_B = partial_trace(qden,0)
-        eigenval_A, eigenvec_A = eigen_decomposition(margin_A)
-        eigenval_B, eigenvec_B = eigen_decomposition(margin_B)
-        if (eigenval_A[0]>=eigenval[0]+eigenval[1] and eigenval_B[0]>=eigenval[0]+eigenval[1] and eigenval_A[0]+eigenval_B[0]>=2*eigenval[0]+eigenval[1]+eigenval[2] and abs(eigenval_A[0]-eigenval_B[0]<=min(eigenval[3]-eigenval[1],eigenval[2]-eigenval[0]))):
-            return True
+        eigenval_A, eigenvec_A = eigen_decomposition(rho_A)
+        eigenval_B, eigenvec_B = eigen_decomposition(rho_B)
+        lambda_A = eigenval_A[0]
+        lambda_B = eigenval_B[0]
+        lambda_1 = eigenval[3]
+        lambda_2 = eigenval[2]
+        lambda_3 = eigenval[1]
+        lambda_4 = eigenval[0]
+        eigenvalues_Bravyi=[[lambda_A, lambda_B], [lambda_1, lambda_2, lambda_3, lambda_4]]
+        if (lambda_A>=lambda_3+lambda_4 and lambda_B>=lambda_3+lambda_4 and lambda_A+lambda_B>=lambda_2+lambda_3+2*lambda_4 and abs(lambda_A-lambda_B<=min(lambda_1-lambda_3,lambda_2-lambda_4))):
+            return True, eigenvalues_Bravyi
         else:
-            return False
+            return False, eigenvalues_Bravyi
     else:
-        return False
-
+        raise DensityMatrixDimensionError("Argument is not two qubit quantum states (density matrix/four dimensional matrix)!")
+        return False, None
 
 def density_matrix_trace_check(qden):
     """
@@ -1985,6 +2027,9 @@ def density_matrix_trace_check(qden):
         >>> print(density_matrix_trace_check(rho_C))
             True
     """
+    if not (np.ndim(qden) == 2):
+        raise DensityMatrixDimensionError("Argument is not two dimensional matrix!")
+        return None
     x = np.trace(qden)
     if (math.isclose(np.real(x), 1, abs_tol=0.000001) and math.isclose(np.imag(x), 0, abs_tol=0.000001)):
         return True
