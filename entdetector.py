@@ -1974,7 +1974,8 @@ def bravyi_theorem_for_two_qubit_mixed_state_check(qden, rho_A, rho_B):
         >>> print("rslt =", rslt)
 
     """
-    if (len(qden)==4 and len(qden[0])==4):
+    x=calculate_purity(qden)
+    if (len(qden)==4 and len(qden[0])==4 and x[0]==False): 
         eigenval, eigenvec = eigen_decomposition(qden)
         eigenval_A, eigenvec_A = eigen_decomposition(rho_A)
         eigenval_B, eigenvec_B = eigen_decomposition(rho_B)
@@ -1990,8 +1991,12 @@ def bravyi_theorem_for_two_qubit_mixed_state_check(qden, rho_A, rho_B):
         else:
             return False, eigenvalues_Bravyi
     else:
-        raise DensityMatrixDimensionError("Argument is not two qubit quantum states (density matrix/four dimensional matrix)!")
+        if not(len(qden)==4 and len(qden[0])==4):
+            raise DimensionError("Not 2-qubit state!")
+        else:
+            raise ValueError("Not mixed state!")
         return False, None
+
 
 def density_matrix_trace_check(qden):
     """
