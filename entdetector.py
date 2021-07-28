@@ -2066,9 +2066,6 @@ def calculate_purity(qden):
         >>> print(calculate_purity(rho_B))
             (False, 0.25)
     """
-    if not (np.ndim(qden) == 2):
-        raise DensityMatrixDimensionError("Argument is not two dimensional matrix!")
-        return None
     if density_matrix_trace_check(qden):
         x = np.matmul(qden,qden)
         y = np.trace(x)
@@ -2079,9 +2076,6 @@ def calculate_purity(qden):
             t = False, y
             return t
     else:
-        print('wyjątek! macierz nie jest poprawna macierza gestosci')
-
-
-
-
+        raise ArgumentValueError("The matrix is not a correct density matrix!")
+        return None
 
