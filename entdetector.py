@@ -1943,39 +1943,70 @@ def calculate_l1norm_coherence(qden):
 
 def bravyi_theorem_for_two_qubit_mixed_state_check(qden, rho_A, rho_B):
     """
-        Function checks if qden represents 2-qubit mixed state rho_(AB) for
-        margins rho_A and rho_B, according to the theorem from: S. Bravyi,
-        Requirments for compatibility between local and multipartite quantum
-        states, quant-ph/0301014
+    Function checks if qden represents 2-qubit mixed state rho_(AB) for
+    margins rho_A and rho_B, according to the theorem from: S. Bravyi,
+    Requirments for compatibility between local and multipartite quantum
+    states, quant-ph/0301014
 
-        Parameters
-        ----------
-        qden, rho_A, rho_B : numpy arrays
-            The parameter qden represents a density matrix, and rho_A, rho_B
-            are potential margins of qden
+    Parameters
+    ----------
+    qden, rho_A, rho_B : numpy arrays
+        The parameter qden represents a density matrix, and rho_A, rho_B
+        are potential margins of qden
 
-        Returns
-        -------
-        Boolean value
-        eigenvalues_Bravyi: list
+    Raises
+    ------
+    ValueError
+        If state is not mixed.
+    DimensionError
+        If state is not 2-qubit state.
+
+    Returns
+    -------
+    Boolean value
+    eigenvalues_Bravyi: list
             The boolean value informs if rho_A and rho_B are margions of qden
             according to Bravyi theorem. In eigenvalues_Bravyi first two values
             are minimal eigenvalues of rho_A and rho_B, and the next four are
             eigenvalues of qden in descending order
-
-        Examples
-        --------
-        >>> qAB = create_isotropic_qubit_state(0.15)
-        >>> qA = partial_trace(qAB, 1)
-        >>> qB = partial_trace(qAB, 0)
-        >>> print(qA)
-        >>> print(qB)
-        >>> rslt=bravyi_theorem_for_two_qubit_mixed_state_check(qAB, qA, qB)
-        >>> print("rslt =", rslt)
-
+    Examples
+    --------
+    Let rho_A and rho_B be arbitrary margins, and rho_C is 2-qubit mixed state
+    >>> a = np.ndarray(shape=(2),dtype=complex)
+    >>> b = np.ndarray(shape=(2),dtype=complex)
+    >>> a[0]=1/math.sqrt(2)
+    >>> a[1]=1/math.sqrt(2)
+    >>> b[0]=0
+    >>> b[1]=1
+    >>> rho_A = vector_state_to_density_matrix(a)
+    >>> rho_B = vector_state_to_density_matrix(b)
+    >>> rho_C = create_mixed_state(2,2)
+    >>> print(bravyi_theorem_for_two_qubit_mixed_state_check(rho_C,rho_A,rho_B))
+        (False, [[0.0, 0.0], [0.25, 0.25, 0.25, 0.25]])
+    Let rho_C be a 2-qubit pure state and rho_A, rho_B its margins
+    >>> C = create_wstate(2)
+    >>> rho_C = vector_state_to_density_matrix(C)
+    >>> rho_A = partial_trace_main_routine(rho_C, [2, 2], axis=1)
+    >>> rho_B = partial_trace_main_routine(rho_C, [2, 2], axis=0)
+    >>> print(bravyi_theorem_for_two_qubit_mixed_state_check(rho_C, rho_A, rho_B))
+        Traceback (most recent call last): ... ValueError: Not mixed state!
+    Let rho_C be a 3-qubit state and rho_A, rho_B its margins
+    >>> C = create_random_qudit_state(2, 3)
+    >>> rho_C = vector_state_to_density_matrix(C)
+    >>> rho_AB = partial_trace_main_routine(rho_C, [2, 2, 2], axis=2)
+    >>> rho_B = partial_trace_main_routine(rho_AB, [2, 2], axis=0)
+    >>> rho_A = partial_trace_main_routine(rho_AB, [2, 2], axis=1)
+    >>> print(bravyi_theorem_for_two_qubit_mixed_state_check(rho_C, rho_A, rho_B))
+        Traceback (most recent call last): ... DimensionError: Not 2-qubit state!
+    Let rho_C be a 2-qubit mixed state and rho_A, rho_B its margins
+    >>> rho_C = create_mixed_state(2, 2)
+    >>> rho_A = partial_trace_main_routine(rho_C, [2, 2], axis=1)
+    >>> rho_B = partial_trace_main_routine(rho_C, [2, 2], axis=0)
+    >>> print(bravyi_theorem_for_two_qubit_mixed_state_check(rho_C, rho_A, rho_B))
+        (True, [[0.5, 0.5], [0.25, 0.25, 0.25, 0.25]])
     """
     x=calculate_purity(qden)
-    if (len(qden)==4 and len(qden[0])==4 and x[0]==False): 
+    if (len(qden)==4 and len(qden[0])==4 and x[0]==False):
         eigenval, eigenvec = eigen_decomposition(qden)
         eigenval_A, eigenvec_A = eigen_decomposition(rho_A)
         eigenval_B, eigenvec_B = eigen_decomposition(rho_B)
@@ -1996,7 +2027,6 @@ def bravyi_theorem_for_two_qubit_mixed_state_check(qden, rho_A, rho_B):
         else:
             raise ValueError("Not mixed state!")
         return False, None
-
 
 def density_matrix_trace_check(qden):
     """
