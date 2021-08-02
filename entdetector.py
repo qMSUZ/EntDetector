@@ -1530,7 +1530,57 @@ def monotone_for_five_qubit_system(rho):
 #
 #
 
-def create_random_qudit_state(d, n, o=0): # o=0 - only real numbers, 1 - complex numbers, 2 - mixed numbers (~ 1/2 complex numbers)
+def create_random_qudit_pure_state(d, n, o=0):
+    """
+    Computes random qudit vector (pure) quantum state.
+    Parameters
+    ----------
+    d : integer
+        Describes the freedom level
+    n : integer
+        Describes the number of qudits
+    o : interval
+        Specifies elements of the computed vector. If o=0 (default value) the
+        vector state is filled with complex numbers, but the imaginary part
+        always equals 0. If o=1 the complex numbers are generated (there is
+        a small propability that the imaginary part of the element is equals 0).
+        When o=2, about half of generated elements, i.e. complex numbers, have
+        the imaginary part equal to zero.
+    Returns
+    -------
+    psi : numpy array
+        The state vector of n qudits (where the freedom level is specified by d).  
+    Raises
+    --------
+    ValueError
+        If o is not 0, 1 or 2.
+    Examples
+    --------
+    Generation of an arbitrary vector state with two qutrits (all imaginary
+    parts equal zero):
+    >>> print(create_random_qudit_pure_state(3, 2))
+        [-0.29096037+0.j  0.26164289+0.j -0.39797311+0.j -0.4512239 +0.j
+         -0.46182827+0.j  0.01962066+0.j  0.4003028 +0.j -0.14642441+0.j
+         0.29924355+0.j]
+    Generation of an arbitrary vector state with three qubits (imaginary
+    parts not equal zero):
+    >>> print(create_random_qudit_pure_state(2, 3, 1))
+        [-0.17483161+0.22494299j -0.30446292+0.43240484j -0.36044787-0.14708236j
+         0.1740339 +0.19282974j  0.11754922+0.11299262j -0.12301861+0.06155706j
+         -0.23005978-0.18387321j -0.43584704+0.31293522j]
+    Generation of an arbitrary vector state with two ququats (about half of
+    imaginary parts equal zero):
+    >>> print(create_random_qudit_pure_state(4, 2, 2))
+        [ 0.31112823-0.17808906j -0.09969305+0.j          0.25818887+0.j
+         -0.31093147+0.j          0.21543078+0.08418701j  0.15115571+0.11414964j
+         -0.27394187+0.09819806j -0.18150951-0.28072925j -0.17691299+0.03188155j
+         -0.0496484 -0.11691207j -0.02743185+0.j          0.31295478+0.j
+         -0.07818034+0.j         -0.22111164+0.j         -0.27007445+0.19900792j
+         -0.25301898+0.18352255j]
+    The attempt to generate a state with an uncorrect parameter:
+    >>> print(create_random_qudit_pure_state(4, 2, 3))
+        Traceback (most recent call last): ... ValueError: Option has to be: 0, 1 or 2
+    """
     ampNumber = d ** n
     psi = np.ndarray(shape=(ampNumber),dtype=complex)
     F = np.ndarray(shape=(ampNumber),dtype=complex)
@@ -1552,7 +1602,7 @@ def create_random_qudit_state(d, n, o=0): # o=0 - only real numbers, 1 - complex
                 b = rd.uniform(-1,1)
             F[i] = complex(a,b)
     else:
-        raise ArgumentValueError('Option has to be: 0, 1 or 2')
+        raise ValueError('Option has to be: 0, 1 or 2')
         return None
     #normalization
     con = np.matrix.conjugate(F)
