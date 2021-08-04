@@ -1612,6 +1612,68 @@ def create_random_qudit_pure_state(d, n, o=0):
         psi[i] = F[i] / norm
     return psi
 
+def create_random_pure_state_as_density_matrix(d, n, o=0):
+    """
+    Computes random qudit pure quantum state as density matrix.
+    Parameters
+    ----------
+    d : integer
+        Describes the freedom level
+    n : integer
+        Describes the number of qudits
+    o : interval
+        Specifies elements of the computed matrix. If o=0 (default value) the
+        matrix state is filled with complex numbers, but the imaginary part
+        always equals 0. If o=1 the complex numbers are generated (there is
+        a small propability that the imaginary part of the element equals 0,
+        if the element is not on the main diagonal of the matrix).
+        When o=2, the probability of obtaining element with non-zero imaginary
+        part is between 1/2 and 3/4.
+    Returns
+    -------
+    rho : numpy array
+        The density matrix of n qudits (where the freedom level is specified by d).  
+    Raises
+    --------
+    ValueError
+        If o is not 0, 1 or 2.
+    Examples
+    --------
+    Generation of an arbitrary density matrix representing 1-qutrit state (all
+    imaginary parts equal zero):
+    >>> print(create_random_pure_state_as_density_matrix(3, 1))
+        [[0.40559756+0.j 0.11370605+0.j 0.47766004+0.j]
+         [0.11370605+0.j 0.03187659+0.j 0.1339082 +0.j]
+         [0.47766004+0.j 0.1339082 +0.j 0.56252585+0.j]]
+    Generation of an arbitrary density matrix representing 1-qutrit state
+    (imaginary parts outside the main diagonal not equal zero):
+    >>> print(create_random_pure_state_as_density_matrix(3, 1, 1))
+        [[ 0.30476925+0.j         -0.25416467+0.33175818j  0.1177049 -0.15286381j]
+         [-0.25416467-0.33175818j  0.57309971+0.j         -0.26456161-0.00064634j]
+         [ 0.1177049 +0.15286381j -0.26456161+0.00064634j  0.12213104+0.j        ]]
+    Generation of an arbitrary density matrix for 2-qubit state (more then half
+    of imaginary parts equal zero):
+    >>> print(create_random_pure_state_as_density_matrix(2, 2, 2))
+        [[ 0.13354882+0.j         -0.10835538-0.15421297j  0.02296095+0.j
+          -0.16818875-0.2266635j ]
+         [-0.10835538+0.15421297j  0.26598909+0.j         -0.01862946+0.02651373j
+          0.39819601-0.01030842j]
+         [ 0.02296095+0.j         -0.01862946-0.02651373j  0.00394766+0.j
+          -0.02891657-0.0389701j ]
+         [-0.16818875+0.2266635j   0.39819601+0.01030842j -0.02891657+0.0389701j
+          0.59651444+0.j        ]]
+    The attempt to generate a state with an uncorrect parameter:
+    >>> print(create_random_pure_state_as_density_matrix(2, 4, 3))
+        Traceback (most recent call last): ... ValueError: Option has to be: 0, 1 or 2
+    """
+    if o not in (0,1,2):
+        raise ValueError('Option has to be: 0, 1 or 2')
+        return None
+    else:
+        vs = create_random_qudit_pure_state(d,n,o)
+        rho = np.outer(vs,np.matrix.conjugate(vs))
+        return rho
+
 #o=0 - only real numbers, 1 - complex numbers, 2 - mixed numbers (~ 1/2 complex numbers)
 def create_random_density_state(d, n, o=0):
     if o not in (0,1,2):
