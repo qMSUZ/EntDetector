@@ -1675,16 +1675,6 @@ def create_random_pure_state_as_density_matrix(d, n, o=0):
         return rho
 
 #o=0 - only real numbers, 1 - complex numbers, 2 - mixed numbers (~ 1/2 complex numbers)
-def create_random_density_state(d, n, o=0):
-    if o not in (0,1,2):
-        raise ArgumentValueError('Option has to be: 0, 1 or 2')
-        return None
-    else:
-        vs = create_random_qudit_state(d,n,o)
-        rho = np.outer(vs,np.matrix.conjugate(vs))
-        return rho
-
-#o=0 - only real numbers, 1 - complex numbers, 2 - mixed numbers (~ 1/2 complex numbers)
 def create_random_density_state_mix(d, n, o=0):
     ampNumber = d ** n
     F = np.ndarray(shape=(ampNumber,ampNumber),dtype=complex)
