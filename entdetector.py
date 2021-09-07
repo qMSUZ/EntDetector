@@ -1674,34 +1674,111 @@ def create_random_pure_state_as_density_matrix(d, n, o=0):
         rho = np.outer(vs,np.matrix.conjugate(vs))
         return rho
 
-#o=0 - only real numbers, 1 - complex numbers, 2 - mixed numbers (~ 1/2 complex numbers)
-def create_random_density_state_mix(d, n, o=0):
-    ampNumber = d ** n
-    F = np.ndarray(shape=(ampNumber,ampNumber),dtype=complex)
-    if o == 0:
-        for i in range(ampNumber):
-            for j in range(ampNumber):
-                F[j,i] = complex(rd.uniform(-1,1),0)
-    elif o == 1:
-        for i in range(ampNumber):
-            for j in range(ampNumber):
-                F[j,i] = complex(rd.uniform(-1,1),rd.uniform(-1,1))
-    elif o == 2:
-        for i in range(ampNumber):
-            for j in range(ampNumber):
-                a = rd.uniform(-1,1)
-                x = rd.randint(0,1)
-                if x == 0:
-                    b = 0
-                else:
-                    b = rd.uniform(-1,1)
-                F[j,i] = complex(a,b)
-    else:
-        raise ArgumentValueError('Option has to be: 0, 1 or 2')
+def create_random_density_matrix_for_mixed_state(st_no, d, n, o=0):
+    """
+    Computes a random qudit mixed quantum state in a form of density matrix.
+    Parameters
+    ----------
+    st_no : integer
+        Number of states included in the final mixed state
+    d : integer
+        Describes the freedom level
+    n : integer
+        Describes the number of qudits
+    o : interval
+        Specifies elements of pure states what influences the elements of the
+        final matrix. If o=0 (default value) the pure states are filled with
+        complex numbers, but the imaginary part always equals 0. If o=1 the
+        complex numbers fill pure states (there is a small propability that
+        the imaginary part of the element equals 0, if the element is not on
+        the main diagonal of the matrix). When o=2, the probability of obtaining
+        element of a pure state with non-zero imaginary part is between 1/2 and 3/4.
+    Returns
+    -------
+    rho : numpy array
+        The density matrix of n-qudit mixed state (where the freedom level is
+        specified by d).
+    pr_list : list
+        A list containing probalitities of appearing in the final mixed state
+        for all pure states.
+    state_list : list
+        A list of pure (vector) states generating the final mixed state.
+    Raises
+    --------
+    ValueError
+        If o is not 0, 1 or 2.
+    Examples
+    --------
+    Generation of an arbitrary density matrix representing 2-qubit mixed state
+    obtained from three pure states (all imaginary parts equal zero):
+    >>> print(create_random_density_matrix_for_mixed_state(3, 2, 2, 0))
+        (array([[ 0.34287729+0.j, -0.27228613+0.j, -0.06334613+0.j,  -0.20054115+0.j],
+                [ -0.27228613+0.j,  0.40277631+0.j,  0.01218101+0.j,  0.30655126+0.j],
+                [ -0.06334613+0.j,  0.01218101+0.j,  0.02037116+0.j,  0.00752357+0.j],
+                [-0.20054115+0.j,  0.30655126+0.j,  0.00752357+0.j,  0.23397524+0.j]]),
+         [0.10348, 0.80429, 0.09223],
+         [array([-0.23012278+0.j, -0.72641643+0.j,  0.16157678+0.j, -0.62710096+0.j]),
+          array([ 0.6342675 +0.j, -0.61565374+0.j, -0.09272093+0.j, -0.45834271+0.j]),
+          array([-0.38730957+0.j, -0.68536093+0.j,  0.34148274+0.j, -0.51347953+0.j])])
+    Generation of an arbitrary density matrix representing 2-qubit mixed state
+    obtained from two pure states (non-zero imaginary parts in pure states):
+    >>> print(create_random_density_matrix_for_mixed_state(2, 2, 2, 1))
+        (array([[ 0.09215768+0.j        , -0.10766898-0.04075363j,
+                 0.10086219-0.12932354j, -0.15320487-0.09903645j],
+                [-0.10766898+0.04075363j,  0.19914306+0.j        ,
+                 -0.0905114 +0.23242563j,  0.24724033+0.06356434j],
+                [ 0.10086219+0.12932354j, -0.0905114 -0.23242563j,
+                 0.332369  +0.j        , -0.03153456-0.34803899j],
+                [-0.15320487+0.09903645j,  0.24724033-0.06356434j,
+                 -0.03153456+0.34803899j,  0.37633026+0.j]]),
+         [0.02846, 0.97154],
+         [array([ 0.40880063-0.31569002j,  0.53031417-0.46528147j,
+                 -0.25197582+0.19943566j, -0.24288121+0.27063667j]),
+          array([-0.02954542-0.29354636j,  0.18495111+0.39520847j,
+                 0.41182811-0.4116769j ,  0.39211458+0.47929829j])])
+    The attempt to generate a state with an uncorrect parameter:
+    >>> print(create_random_density_matrix_for_mixed_state(3, 2, 2, 3))
+        Traceback (most recent call last): ... ValueError: Option has to be: 0, 1 or 2
+    """
+    if o not in (0,1,2):
+        raise ValueError('Option has to be: 0, 1 or 2')
         return None
-    rho = np.add(F, np.matrix.conjugate(F))
-    rho = np.divide(rho, 2)
-    return rho
+    else:
+        # generation of probabilities
+        pr_list=[]
+        i=0
+        while i<(st_no-1):
+            x=round(rd.uniform(0,1),5)
+            if (x!=0 and x!=1):
+                pr_list.append(x)
+                i+=1
+            else:
+                continue
+        pr_list.append(1.0)
+        pr_list.sort()
+        # normalisation
+        i=1
+        while i<(st_no):
+            s=0
+            for j in range(i):
+                s+=pr_list[j]
+            pr_list[i]=round(pr_list[i]-s,5)
+            i+=1
+        # pure states generation
+        vec_state_list=[]
+        m_state_list=[]
+        for i in range(st_no):
+            tmp = create_random_qudit_pure_state(d, n, o)
+            vec_state_list.append(tmp)
+            tmp2 = np.outer(tmp,np.matrix.conjugate(tmp))
+            m_state_list.append(tmp2)
+        # mixed state calculation
+        rho = np.multiply(m_state_list[0],pr_list[0])
+        i=1
+        while i<st_no:
+            rho+=np.multiply(m_state_list[i],pr_list[i])
+            i+=1
+    return rho, pr_list, vec_state_list
 
 #o=0 - only real numbers, 1 - complex numbers, 2 - mixed numbers (~ 1/2 complex numbers)
 def create_random_unitary_matrix(dim, o):
