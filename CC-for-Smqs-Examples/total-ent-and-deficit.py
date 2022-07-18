@@ -12,6 +12,10 @@
 # *                              by Roman Gielerak                          *
 # *                                  <R.Gielerak@issi.uz.zgora.pl>          *
 # *                                                                         *
+# * file is related to the paper titled                                     *
+# *   Classical Computer assisted  analysis  of small multi-qudit systems   *
+# *    published in IEEE Access Vol.???, No.???, pages ?????, Year          *
+# *                                                                         *
 # *   Part of the EntDetector:                                              *
 # *         https://github.com/qMSUZ/EntDetector                            *
 # *                                                                         *
