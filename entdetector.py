@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 #/***************************************************************************
-# *   Copyright (C) 2020 -- 2021 by Marek Sawerwain                         *
+# *   Copyright (C) 2020 -- 2022 by Marek Sawerwain                         *
 # *                                  <M.Sawerwain@gmail.com>                *
 # *                                  <M.Sawerwain@issi.uz.zgora.pl>         *
 # *                                                                         *
@@ -835,6 +835,19 @@ def create_x_two_qubit_random_state():
 
 
 
+
+#
+#
+#
+
+def create_standard_base_matrix(d, x, y):
+    
+    if x>d or y>d:
+        raise DimensionError("X or Y values is bigger than d! (x={0}, y={1}, d={2})".format(x,y,d))
+    
+    mat = np.zeros( (d, d) )
+    mat[x,y] = 1
+    return mat
 
 #
 #
@@ -2112,6 +2125,101 @@ def detection_entanglement_by_paritition_division( q, nqubits, verbose = 0 ):
     print("final filtered data")
     for i in ffp:
         print(i)
+
+
+def entropy_by_paritition_division( q, nqubits, verbose = 0 ):
+    #s = q.size
+    s = nqubits
+    # generation of all two partitite divisions of given
+    # set which is build from the quantum register q
+    total_entropy_val = 0.0
+    total_negativity_val = 0.0
+    entropy_val = 0.0
+    res = [ ]
+    idxtoremove = [ ]
+    k = [0] * s
+    M = [0] * s
+    p = 2
+    partititon_p_initialize_first(k, M, p)
+    lp = []
+    lp = lp + [make_partititon_as_list(k)]
+    while partition_p_next(k, M, p):
+        lp = lp + [make_partititon_as_list(k)]
+    for i in lp:
+            if verbose==1 or verbose==2:
+                    print(i[0], i[1])
+            mxv=2**len(i[0])
+            myv=2**len(i[1])
+            if verbose==1:
+                    print(mxv,"x",myv)
+            #m=qcs.Matrix(mxv, myv)
+            m  = np.zeros((mxv, myv), dtype=complex)
+            #mt=qcs.Matrix(mxv, myv)
+            mt = np.zeros((mxv, myv), dtype=complex)
+            for x in range(0,mxv):
+                    for y in range(0, myv):
+                            xstr=bin(x)[2:]
+                            ystr=bin(y)[2:]
+                            xstr='0'*(len(i[0])-len(xstr)) + xstr
+                            ystr='0'*(len(i[1])-len(ystr)) + ystr
+                            cstr=[0]*s
+                            for xidx in range(0, len(xstr)):
+                                    idx = i[0][xidx]
+                                    cstr[idx]=xstr[xidx]
+                            for yidx in range(0, len(ystr)):
+                                    idx = i[1][yidx]
+                                    cstr[idx]=ystr[yidx]
+                            cidx=""
+                            for c in cstr:
+                                    cidx=cidx+c
+                            dcidx=bin2dec(cidx)
+                            dxidx=bin2dec(xstr)
+                            dyidx=bin2dec(ystr)
+                            if verbose==1:
+                                    print("D("+xstr+","+ystr+")","D(",dxidx,dyidx,") C",dcidx,cidx,cstr)
+                            #m.AtDirect(dxidx,dyidx, q.GetVecStateN(dcidx).Re(), q.GetVecStateN(dcidx).Im())
+                            m[dxidx,dyidx] = q[dcidx]
+                            #mt.AtDirect(dxidx,dyidx, q.GetVecStateN(dcidx).Re(), q.GetVecStateN(dcidx).Im())
+                            mt[dxidx,dyidx] = q[dcidx]
+            if verbose==1:
+                    #m.PrMatlab()
+                    print("m matrix")
+                    print(m)
+            #mf=m.Calc_D_dot_DT() # D * D'
+            mf = m @ m.transpose()
+            #sd=mf.SpectralDecomposition()
+            #sd.eigenvalues.Chop()
+            #ev_count=sd.eigenvalues.NonZeros()
+            (ev,evec)=eigen_decomposition(mf)
+            ev=chop(ev)
+            ev_count = np.count_nonzero(ev)
+            if (ev_count > 1):
+                entropy_val=0.0
+                negativity_val=0.0
+                for ee in ev:
+                    #e=np.sqrt(ee)
+                    e=ee
+                    if e != 0.0:
+                        entropy_val = entropy_val + (e ** 2) * np.log((e ** 2))
+                        #entropy_val = entropy_val + e * np.log2(e)
+                        #entropy_val = entropy_val + e * np.log10(e)
+                        negativity_val=negativity_val+e
+                total_negativity_val += negativity_val
+                total_entropy_val += -entropy_val
+            
+            if verbose==1 or verbose==2:
+                    print("non zero:", ev_count)
+                    print("ev=",ev)
+            if (ev_count==1) and (len(i[0])==1):
+                idxtoremove=idxtoremove+i[0]
+                
+            if (ev_count==1) and (len(i[1])==1):
+                idxtoremove=idxtoremove+i[1]
+                
+            res=res + [[ev_count, [i[0], i[1]]]]
+            if verbose==1 or verbose==2:
+                print()
+    return res,idxtoremove, total_entropy_val, 0.5*((total_negativity_val ** 2)-1.0)
 
 
 def calculate_trace_norm(qden):
