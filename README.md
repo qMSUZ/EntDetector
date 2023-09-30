@@ -42,7 +42,7 @@ The most important features and advantages of the EntDetector package include:
 
 ## Examples
 
-Performing the Schmidt distribution on the entangled EPR state: $\mket{\psi}=\frac{1}{\sqrt{2}}\left(\mket{00}+\mket{11}\right)$ requires us to create the appropriate object, then we need to decompose. It is also worth checking if we got two Schmidt numbers, which was done as follows:
+Performing the Schmidt distribution on the entangled EPR state: $| \psi \rangle = \frac{1}{\sqrt{2}}\left( | 00 \rangle + | 11 \rangle \right)$ requires us to create the appropriate object, then we need to decompose. It is also worth checking if we got two Schmidt numbers, which was done as follows:
 
 
 ```
