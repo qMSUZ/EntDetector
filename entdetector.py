@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#! /usr/bin/env python3
 # -*- coding: utf-8 -*-
 
 #/***************************************************************************
@@ -42,30 +42,23 @@ First version created on Sat Nov 21 18:33:49 2020
 """
 
 import numpy as np
+import sympy
 import scipy
 import cvxpy
 
 import random as rd
 
 import math
+import itertools
+
+from exceptions_classes import *
 
 # smallest value for entropy calculations
 precision_for_entrpy_calc = 0.00001
 
-class DimensionError(Exception):
-    """DimensionError"""
-    def __init__(self, message):
-        self.message = message
-
-class ArgumentValueError(Exception):
-    """ArgumentValueError"""
-    def __init__(self, message):
-        self.message = message
-
-class DensityMatrixDimensionError(Exception):
-    """DensityMatrixDimensionError"""
-    def __init__(self, message):
-        self.message = message
+ENTDETECTOR_version_major       = 0
+ENTDETECTOR_version_minor       = 5
+ENTDETECTOR_version_patch_level = 0
 
 # code based on chop
 # discussed at:
@@ -360,7 +353,10 @@ def create_qutrit_plus_state():
     v[2] = 1.0/np.sqrt(3.0)
     return v
 
-def create_qubit_bell_state(minus=0):
+#
+# docs to update
+#
+def create_qubit_bell_state(minus=0, form=0):
     """
         Create a qubit bell state
 
@@ -387,15 +383,48 @@ def create_qubit_bell_state(minus=0):
         [0.70710678  0.          0.         -0.70710678]
 
     """
+    if form==0:
+        d = 2
+        n = 2
+        v = np.zeros(d ** n)
+        v[0] = 1.0 / np.sqrt(2)
+        if minus == 1:
+            v[(d ** n) - 1] = -1.0 / np.sqrt(2)
+        else:
+            v[(d ** n) - 1] =  1.0 / np.sqrt(2)
+
+    if form==1:
+        d = 2
+        n = 2
+        v = np.zeros(d ** n)
+        v[1] = 1.0 / np.sqrt(2)
+        if minus == 1:
+            v[2] = -1.0 / np.sqrt(2)
+        else:
+            v[2] =  1.0 / np.sqrt(2)
+
+                
+    return v
+
+#
+# TO DOC GEN
+#
+def create_two_qubit_bell_state_non_maximal( ratio = 0.5, minus=0 ):
+    
+    #  0.0 <= ratio <= 1.0
+    
     d = 2
     n = 2
-    v = np.zeros(d ** n)
-    v[0] = 1.0 / np.sqrt(2)
-    if minus == 1:
-        v[(d ** n) - 1] = -1.0 / np.sqrt(2)
-    else:
-        v[(d ** n) - 1] =  1.0 / np.sqrt(2)
-    return v
+
+    last_idx = (d ** n) - 1
+    q = create_qubit_bell_state( minus )
+
+    q[ 0 ] = ratio * q[ 0 ]
+    q[ last_idx ] = (1.0-ratio) * q[ last_idx ]
+    
+    q=q/np.linalg.norm(q)
+    
+    return q
 
 def create_mixed_state(d,n):
     """
@@ -584,8 +613,8 @@ def create_bes_horodecki_33_state(a):
 
 def create_ghz_state(d, n):
     """
-        Create a GHz state
-
+        Create a GHZ state 
+ 
         Parameters
         ----------
         d : integer
@@ -601,7 +630,7 @@ def create_ghz_state(d, n):
 
         Examples
         --------
-        Create of register for a GHz state
+        Create of register for a GHZ state two qubit state
         >>> q0=create_ghz_state(2, 2)
         >>> print(q0)
         [0.70710678 0.         0.         0.70710678]
@@ -609,7 +638,57 @@ def create_ghz_state(d, n):
     g = np.zeros(d ** n)
     step = np.sum(np.power(d, range(n)))
     g[range(d) * step] = 1/np.sqrt(d)
+    #g[0] = 1/np.sqrt(d)
+    #g[-1] = 1/np.sqrt(d)
     return g
+
+def create_ghz_alpha_qubit_state(n, alpha):
+    """
+        Create a GHZ state for N qubits register
+            with alpha parameter 
+ 
+        Parameters
+        ----------
+        d : integer
+            the number of degrees of freedom for the qudit d,
+
+        n : integer
+            number of qudits for the created state
+
+        Returns
+        -------
+        quantum state : numpy vector
+            Numpy vector gives the d-partite GHZ state acting on local n dimensions
+
+        Examples
+        --------
+        Create of register for a GHZ state two qubit state
+        >>> q0=create_ghz_alpha_qubit_state(2, np.pi/4)
+        >>> print(q0)
+        [0.70710678 0.         0.         0.70710678]
+    """
+    d=2
+    g = np.zeros(d ** n)
+    g[0] = np.sin(alpha)
+    g[-1] = np.cos(alpha)
+    return g
+
+def create_generalized_n_qutrit_ghz_state(N, alpha):
+    #d=3
+    q = np.zeros( 3 ** N)
+    q[0]=np.sin( alpha )
+    
+    val=''
+    for i in [1] * N:
+        val = val + str(i)   
+    q[ int(val, 3) ] = 1.0/np.sqrt(2) * np.cos(alpha)
+    
+    val=''
+    for i in [2] * N:
+        val = val + str(i)   
+    q[ int(val, 3) ] = 1.0/np.sqrt(2) * np.cos(alpha)
+    
+    return q
 
 def create_noon_state(d, N, theta):
      g = np.zeros(d * d, dtype=complex)
@@ -673,14 +752,14 @@ def create_isotropic_qubit_state(p):
     qden = (p * qdentmp) + ((1-p) * 0.25 * np.eye(4))
     return qden
 
-def create_werner_two_qubit_state(p, state="Bell+"):
+def create_mixed_and_entangled_two_qubit_state(p, state="Bell+"):
     """
-        Create a Werner state for two qubit
+        Create a mixed and entangled state for two qubit
 
         Parameters
         ----------
         p : real
-           The parameter of the isotropic state
+           The parameter of the mixed 
         state : string
            The name of quantum state: Bell+, Bell-, W.
            Default value is Bell+.
@@ -693,9 +772,9 @@ def create_werner_two_qubit_state(p, state="Bell+"):
 
         Examples
         --------
-        Create of register for two qubit to a Werner state
+        Create of register for two qubit to a mixed and entanglement state
         between max entangled state and mixed state
-        >>> q0=create_werner_two_qubit_state(0.25, state="Bell+")
+        >>> q0=create_mixed_and_entangled_two_qubit_state(0.25, state="Bell+")
         >>> print(q0)
         [[0.3125 0.     0.     0.125 ]
          [0.     0.1875 0.     0.    ]
@@ -711,6 +790,81 @@ def create_werner_two_qubit_state(p, state="Bell+"):
     qdentmp = np.outer(q, q)
     qden = (p * qdentmp) + ((1-p) * 0.25 * np.eye(4))
     return qden
+
+def create_two_qubit_werner_state(p):
+    werner_state =np.array(
+                [[p/3.0,            0,            0,     0],
+                 [    0, ( 3-2*p)/6.0, (-3+4*p)/6.0,     0],
+                 [    0, (-3+4*p)/6.0, ( 3-2*p)/6.0,     0],
+                 [    0,            0,            0, p/3.0]])
+    return werner_state
+
+def create_werner_state(d, p):    
+    eye = np.eye(d*d)
+    fab = np.zeros((d*d, d*d))
+    for i in range(d):
+        for j in range(d):
+            fa=np.zeros( (d, d) )
+            fb=np.zeros( (d, d) )
+            fa[i,j]=1;
+            fb[j,i]=1;
+            fab=fab+np.kron(fa, fb)
+    
+    psym = 0.5 * ( eye + fab )
+    pas  = 0.5 * ( eye - fab )
+    werner_state = ((p*(2.0))/(d*(d+1.0)))*psym + (((1.0-p)*(2.0))/(d*(d-1.0)))*pas
+    
+    return werner_state
+
+def create_four_qubit_cluster_state():
+    q = np.zeros(16)
+    
+    q[0] = q[2] = q[12] = q[15] = 0.5
+    
+    return q
+
+def create_four_qubit_singlet_state():
+    q = np.zeros(16)
+    
+    q[3] = q[12] = 1.0/np.sqrt(3.0)
+    q[5] = q[6] = q[9] = q[10] = -1.0/np.sqrt(12.0)
+    
+    return q
+    
+def create_four_qubit_higuchi_sudbery_state():
+    q = np.zeros(2 ** 4, dtype=complex)
+    
+    omega = -0.5  + (np.sqrt(3)/2.0)*1j
+    omega_square = omega * omega
+    
+    # 1/√6( |1100> + |0011> + ω(|1001> + |0110>) + ω^2(|1010> + |0101>))
+    
+    q[12] = 1
+    q[3] = 1
+    
+    q[9] = omega
+    q[6] = omega
+    
+    q[10] = omega_square
+    q[5] = omega_square
+    
+    q = q * 1.0/np.sqrt(6)  
+    
+    return q
+
+def create_dicke_state(evalue, Nvalue):
+    coff = 1.0 / math.sqrt(math.comb(Nvalue, evalue))
+    q = np.zeros(2 ** Nvalue)
+    # not effective, rewritten required
+    for p in itertools.permutations( [0]*(Nvalue - evalue) + [1]*evalue ):
+        val=''
+        for it in p:
+            val=val + str(it)
+        q[int(val, 2)] = coff
+    return q
+
+def create_three_qutrit_singlet_state():
+    pass
 
 def create_chessboard_state(a,b,c,d,m,n):
     """
@@ -835,6 +989,207 @@ def create_x_two_qubit_random_state():
 
 
 
+# (1) new function to create quantum states
+def create_random_pure_state( _d, _n, complex_no=False ):
+    """
+        Creates a random pure quantum state.
+
+        Parameters
+        ----------
+        _d : int
+            Freedom level of generated state.
+        _n : int
+            The number of qudits.
+        complex_no : Boolean
+            Default as False, what means that amplitudes are complex number 
+            with imaginary part always equal to zero. If this parameter is
+            True, then aplitudes may have non-zero imaginary part (the 
+            probability that pointed out amplitude has non-zero imaginary part
+            is 0.5).
+
+        Returns
+        -------
+        _tab : numpy array
+            A normalized quantum state.
+
+        Examples
+        --------
+        Generation of 1-qubit states with probable non-zero imaginary parts in
+        amplitudes' values:
+        >>> ent.create_random_pure_state(2, 1, True)
+        [0.-0.53545756j 0.+0.84456214j]
+        >>> ent.create_random_pure_state(2, 1, True)
+        [-0.87414796+0.j  0.4856597 +0.j]
+        >>> ent.create_random_pure_state(2, 1, True)
+        [0.        +0.92040475j 0.39096686+0.j        ]
+        Generation of 1-qubit states only with imaginary parts equal to zero:
+        >>> ent.create_random_pure_state(2, 1)
+        [0.77860131+0.j 0.62751893+0.j]
+        Generation of 1-qutrit states only with imaginary parts equal to zero:
+        >>> ent.create_random_pure_state(3, 1)
+        [-0.46514564+0.j  0.63426271+0.j -0.61753571+0.j]
+        Generation of 1-qutrit states with probable non-zero imaginary parts:
+        >>> ent.create_random_pure_state(3, 1, True)
+        [0.65804958+0.j         0.24362108+0.j         0.        -0.71247422j]
+        
+    """
+    _x = _d ** _n
+    _tab = np.ndarray(shape=(_x),dtype=complex)
+    _tab_final = np.ndarray(shape=(_x),dtype=complex)
+    _list1 = [0, 1]
+    
+    if complex_no==False:
+        for i in range(_x):
+            _tab[i] = rd.uniform(-1,1) + 0j
+        print(_tab)
+    elif complex_no==True:
+        for i in range(_x):
+            _compl=rd.choice(_list1)
+            if _compl==0:
+                _tab[i] = rd.uniform(-1,1) + 0j
+            else:
+                _tab[i] = 0 + rd.uniform(-1,1)*1j
+        print(_tab)
+    else:
+        raise ValueError("The parameter's _complex value has to be True or False!")
+        return None
+        
+    sum_all=0
+    for i in range(_x):
+        sum_all += abs(sympy.re(_tab[i])) + abs(sympy.im(_tab[i]))
+    print(sum_all)  
+    for i in range(_x):
+        if sympy.re(_tab[i]) >= 0 and sympy.im(_tab[i]) == 0:
+            re_pos=sympy.re(_tab[i])
+            re_pos=sympy.sqrt(re_pos/sum_all)
+            _tab_final[i]=re_pos
+        elif sympy.re(_tab[i]) < 0 and sympy.im(_tab[i]) == 0:
+            re_neg=abs(sympy.re(_tab[i]))
+            re_neg=sympy.sqrt(re_neg/sum_all)
+            _tab_final[i]=re_neg*(-1)
+        elif sympy.re(_tab[i]) == 0 and sympy.im(_tab[i]) > 0:
+            im_pos=sympy.im(_tab[i])
+            im_pos=sympy.sqrt(im_pos/sum_all)
+            _tab_final[i]=im_pos*1j
+        elif sympy.re(_tab[i]) == 0 and sympy.im(_tab[i]) < 0:
+            im_neg=abs(sympy.im(_tab[i]))
+            im_neg=sympy.sqrt(im_neg/sum_all)
+            _tab_final[i]=im_neg*(-1j)
+        else:
+            print('Should never happen')
+    
+    return _tab_final
+
+# (2) new function to create quantum states
+def create_random_1qubit_pure_state():
+    """
+        Creates a random 1-qubit (d=2) pure state.
+
+        Returns
+        -------
+        _tab : numpy array
+            A normalized quantum state with amplitudes as complex numbers.
+
+        Examples
+        --------
+        >>> ent.create_random_1qubit_pure_state()
+        [0.33570732+0.j         0.        -0.94196635j]
+        >>> ent.create_random_1qubit_pure_state()
+        [0.93620949+0.j 0.35144243+0.j]
+        >>> ent.create_random_1qubit_pure_state()
+        [ 0.75643296+0.j -0.65407123+0.j]
+        
+    """
+    _tab=np.ndarray(shape=(2),dtype=complex)
+    for i in range(2):
+        _tab[i]=rd.uniform(0,1)
+    sum_all=0
+    for i in range(2):
+        sum_all+=_tab[i]
+    for i in range(2):
+        _tab[i]=sympy.sqrt(_tab[i]/sum_all)
+    _list1 = [0, 1]
+    sign=rd.choice(_list1)
+    compl=rd.choice(_list1)
+    if sign==1:
+        _tab[1]*=-1
+    if compl==1:
+        pom=_tab[1]*sympy.I
+        _tab[1]=pom
+    return _tab
+
+#
+# TO DOC GEN
+#
+# (3) new function to create quantum states
+def create_random_2qubit_pure_state():
+    """
+        Creates a random 2-qubit (d=2) pure state. The probability of 
+        entanglement occurence is 1/2.
+
+        Returns
+        -------
+        _tab : numpy array
+            A normalized quantum state with amplitudes as complex numbers.
+
+        Examples
+        --------
+        >>> ent.create_random_2qubit_pure_state()
+        [ 0.35399885+0.j          0.        -0.06455057j -0.91788041+0.j
+          0.        +0.1673726j ]
+        >>> ent.create_random_2qubit_pure_state()
+        [ 0.42914302+0.j          0.        +0.71644913j -0.28263805+0.j
+         -0.        -0.47186083j]
+        >>> ent.create_random_2qubit_pure_state()
+        [0.70710678+0.j 0.        +0.j 0.        +0.j 0.70710678+0.j]
+        
+    """
+    list1 = [0, 1]
+    ent = rd.choice(list1)
+    if ent==1:
+        _tab=np.zeros(shape=(4),dtype=complex)
+        list2 = [0, 1, 2, 3]
+        r=rd.choice(list2)
+        if r==0:
+            _tab[0]=1
+            _tab[3]=1
+        elif r==1:
+            _tab[0]=1
+            _tab[3]=-1
+        elif r==2:
+            _tab[1]=1
+            _tab[2]=1
+        elif r==3:
+            _tab[1]=1
+            _tab[2]=-1
+        _tab = _tab * 1.0/np.sqrt(2.0)
+    else:
+        _tab=np.ndarray(shape=(4),dtype=complex)
+        s1=create_random_1qubit_pure_state()
+        s2=create_random_1qubit_pure_state()
+        _tab[0]=s1[0]*s2[0]
+        _tab[1]=s1[0]*s2[1]
+        _tab[2]=s1[1]*s2[0]
+        _tab[3]=s1[1]*s2[1]
+    return _tab
+
+
+#
+# TO DOC GEN
+#
+# (4) new function to create quantum states
+def create_random_2qubit_separable_pure_state():
+    _tab=np.ndarray(shape=(4),dtype=complex)
+    
+    _s1=create_random_1qubit_pure_state()
+    _s2=create_random_1qubit_pure_state()
+    
+    _tab[0]=_s1[0]*_s2[0]
+    _tab[1]=_s1[0]*_s2[1]
+    _tab[2]=_s1[1]*_s2[0]
+    _tab[3]=_s1[1]*_s2[1]
+    
+    return _tab
 
 #
 #
@@ -1102,6 +1457,20 @@ def reconstruct_state_after_schmidt_decomposition(s, e, f):
     return v
 
 #
+# TO DOC GEN
+#
+def is_entangled_vector_2q_state( q ):
+    rslt = False
+    
+    decomposition_shape = (2, 2)
+    sr = schmidt_rank_for_vector_pure_state(q, decomposition_shape)
+    
+    if sr>1:
+        rslt = True
+        
+    return rslt
+
+#
 # Creation of spectral table of given quantum state
 # expressed as density matrix
 #
@@ -1222,6 +1591,7 @@ def negativity( qden, d=2, n=2 ):
             0.4999999999999998
     """
     dim = int(np.log(d ** n)/np.log(d))
+    #dim = int((d ** n)/(d))
     qdentmp = partial_transpose(qden, [[dim,dim], [dim,dim]], [0, 1])
     negativity_value = (np.linalg.norm(qdentmp, 'nuc') - 1.0)/2.0
     return chop(negativity_value)
@@ -1981,9 +2351,9 @@ def filtered_data_for_paritition_division( r, idxtoremove ):
     # sort by Schmidt rank
     #
     rr=sorted(rr)
-    print("sorted partitions")
-    for i in rr:
-        print(i)
+    # print("sorted partitions")
+    # for i in rr:
+    #     print(i)
     #end for
     #
     # building a set of partitions
@@ -2100,17 +2470,17 @@ def ent_detection_by_paritition_division( q, nqubits, verbose = 0 ):
 
 def detection_entanglement_by_paritition_division( q, nqubits, verbose = 0 ):
     [r,idxtoremove]=ent_detection_by_paritition_division( q, nqubits, verbose )
-    print("idx to remove", idxtoremove)
-    print("all partitions")
-    for i in r:
-        print(i)
+    #print("idx to remove", idxtoremove)
+    #print("all partitions")
+    # for i in r:
+    #     print(i)
     fp = filtered_data_for_paritition_division( r, idxtoremove )
-    if len(fp)==0:
-        print("register is fully separable")
-    else:
-        print("raw final filtered data")
-        for i in fp:
-            print(i)
+    # if len(fp)==0:
+    #     print("register is fully separable")
+    # else:
+    #     print("raw final filtered data")
+    #     for i in fp:
+    #         print(i)
     
     cfp = set(fp)
     ffp = set(fp)
@@ -2122,10 +2492,11 @@ def detection_entanglement_by_paritition_division( q, nqubits, verbose = 0 ):
             if (set(i) < set(e)) and (len(i)!=len(e)):
                 if e in ffp:
                     ffp.remove(e)
-    print("final filtered data")
-    for i in ffp:
-        print(i)
+    # print("final filtered data")
+    # for i in ffp:
+    #     print(i)
 
+    return ffp
 
 def entropy_by_paritition_division( q, nqubits, verbose = 0 ):
     #s = q.size
@@ -2401,3 +2772,31 @@ def calculate_purity(qden):
         raise ArgumentValueError("The matrix is not a correct density matrix!")
         return None
 
+# function to rewrite
+def dec_to_base(num,base):  #Maximum base - 36
+    base_num = ""
+    while num>0:
+        dig = int(num%base)
+        if dig<10:
+            base_num += str(dig)
+        else:
+            base_num += chr(ord('A')+dig-10)  #Using uppercase letters
+        num //= base
+
+    base_num = base_num[::-1]  #To reverse the string
+    return base_num
+
+def pr_state(q, N, d):
+    idx=0
+    for v in q:
+        print(dec_to_base(idx, d).zfill(N), v)
+        idx=idx+1
+
+def version():
+    pass
+
+def about():
+    pass
+
+def how_to_cite():
+    pass
